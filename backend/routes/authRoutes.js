@@ -14,6 +14,20 @@ const router = express.Router();
 router.post('/register', async (req, res) => {
     try {
         const { username, password, email } = req.body;
+        if (!username || !password || !email) {
+            return res.status(400).json({ error: 'All fields are required' });
+        }
+
+        const existingUsername = User.find({ username });
+        if (existingUsername) {
+            return res.status(400).json({ error: 'Another user already has this username' });
+        }
+
+        const existingEmail = User.find({ email });
+        if (existingEmail) {
+            return res.status(400).json({ error: 'Another account already uses this email' });
+        }
+
         const hashedPassword = await bcrypt.hash(password, 10);
         const user = new User({ username, password: hashedPassword, email, });
         const userProfile = new UserProfile({ userId: user._id, displayName: username });
@@ -33,10 +47,12 @@ router.post('/login', async (req, res) => {
         if (!user) {
             return res.status(404).json({ error: 'User not found' });
         }
+
         const isPasswordMatch = await bcrypt.compare(password, user.password);
         if (!isPasswordMatch) {
             return res.status(400).json({ error: 'Invalid credentials' });
         }
+        
         // why can you not just use the environment variable directly??
         const token = jwt.sign({ userId: user._id }, `${JWT_SECRET}`, {
             expiresIn: '1h',

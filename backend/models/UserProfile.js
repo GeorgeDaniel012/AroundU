@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 
 const userProfileSchema = new mongoose.Schema({
     userId: {
-        type: String,
+        type: mongoose.Types.ObjectId,
         required: true,
         unique: true,
     },
@@ -12,7 +12,7 @@ const userProfileSchema = new mongoose.Schema({
     },
     bio: String,
     friends: {
-        type: Array,
+        type: [mongoose.Types.ObjectId], // array of user _ids
         default: []
     }
 }, { timestamps: true });

@@ -16,7 +16,6 @@ function verifyToken(req, res, next) {
         const decodedToken = jwt.verify(token, `${JWT_SECRET}`);
         // does this set the userId field in the request?
         req.userId = decodedToken.userId;
-        console.log(decodedToken);
         next();
     } catch(err) {
         return res.status(500).json({ error: err.message });
