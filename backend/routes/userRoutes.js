@@ -7,6 +7,30 @@ const bcrypt = require('bcrypt');
 
 const router = express.Router();
 
+router.get('/profile/:username', async (req, res) => {
+    try {
+        const username = req.params.username;
+        // this route is public, so no need for token verification
+        if (!username) {
+            return res.status(400).json({ error: 'Username is required' });
+        }
+
+        const user = await User.findOne({ username });
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+        
+        const userProfile = await UserProfile.findOne({ userId: user._id })
+            .select('displayName bio friends'); // only include wanted fields
+        if (!userProfile) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+        res.status(200).json({ userProfile });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 // this route is protected by the verifyToken middleware
 router.put('/update', verifyToken, async (req, res) => {
     try {
@@ -52,30 +76,6 @@ router.delete('/delete', verifyToken, async (req, res) => {
         }
         await User.findByIdAndDelete(userId);
         res.status(200).json({ message: 'User deleted successfully' });
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
-});
-
-router.get('/profile/:username', async (req, res) => {
-    try {
-        const username = req.params.username;
-        // this route is public, so no need for token verification
-        if (!username) {
-            return res.status(400).json({ error: 'Username is required' });
-        }
-
-        const user = await User.findOne({ username });
-        if (!user) {
-            return res.status(404).json({ error: 'User not found' });
-        }
-        
-        const userProfile = await UserProfile.findOne({ userId: user._id })
-            .select('displayName bio friends'); // only include wanted fields
-        if (!userProfile) {
-            return res.status(404).json({ error: 'User not found' });
-        }
-        res.status(200).json({ userProfile });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }

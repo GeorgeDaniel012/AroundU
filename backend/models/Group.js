@@ -5,7 +5,8 @@ const groupSchema = new mongoose.Schema({
         type: String,
         required: true,
     },
-    theme: { // such as "sports", "music", "art"
+    groupIcon: String, // url or path to group icon, I'll see :p
+    theme: { // such as "sports", "art", "social"
         type: String,
         required: true,
     },
@@ -21,6 +22,15 @@ const groupSchema = new mongoose.Schema({
         type: Boolean,
         default: false
     },
+    location: {
+        type: {
+            lat: mongoose.Types.Decimal128,
+            long: mongoose.Types.Decimal128
+        },
+        required: true, // groups should have defined location,
+                        // don't know how remote groups would work
+        _id: false // otherwise location object will have it's own id, which is useless
+    },
     members: { // array of users in group, with their _id and permission level
         type: [
             {
@@ -28,9 +38,11 @@ const groupSchema = new mongoose.Schema({
                 permission: {
                     type: Number,
                     default: 0 // default permission level is member
-                }
+                },
+                _id: false // otherwise each member object will have it's own id in the members array
             }
         ],
+        required: true,
         default: []
     }
     /*

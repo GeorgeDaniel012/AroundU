@@ -5,6 +5,7 @@ const mongoose = require('mongoose');
 
 const authRoutes = require('./routes/authRoutes');
 const userRoutes = require('./routes/userRoutes');
+const groupRoutes = require('./routes/groupRoutes');
 
 const app = express();
 
@@ -20,6 +21,7 @@ app.get('/', (req, res) => {
 //app.use('/users', userRoutes);
 app.use('/auth', authRoutes);
 app.use('/user', userRoutes);
+app.use('/group', groupRoutes);
 
 const PORT = process.env.PORT || 3000;
 

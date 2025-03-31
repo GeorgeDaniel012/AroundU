@@ -15,15 +15,15 @@ router.post('/register', async (req, res) => {
     try {
         const { username, password, email } = req.body;
         if (!username || !password || !email) {
-            return res.status(400).json({ error: 'All fields are required' });
+            return res.status(400).json({ error: 'Username, password and email are required' });
         }
 
-        const existingUsername = User.find({ username });
+        const existingUsername = await User.findOne({ username });
         if (existingUsername) {
             return res.status(400).json({ error: 'Another user already has this username' });
         }
 
-        const existingEmail = User.find({ email });
+        const existingEmail = await User.findOne({ email });
         if (existingEmail) {
             return res.status(400).json({ error: 'Another account already uses this email' });
         }
@@ -52,13 +52,13 @@ router.post('/login', async (req, res) => {
         if (!isPasswordMatch) {
             return res.status(400).json({ error: 'Invalid credentials' });
         }
-        
+
         // why can you not just use the environment variable directly??
         const token = jwt.sign({ userId: user._id }, `${JWT_SECRET}`, {
             expiresIn: '1h',
         });
         res.status(200).json({ token });
-    } catch(err) {
+    } catch (err) {
         res.status(500).json({ error: err.message });
     }
 });
