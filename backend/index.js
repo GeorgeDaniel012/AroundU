@@ -6,6 +6,7 @@ const mongoose = require('mongoose');
 const authRoutes = require('./routes/authRoutes');
 const userRoutes = require('./routes/userRoutes');
 const groupRoutes = require('./routes/groupRoutes');
+const groupUserManagementRoutes = require('./routes/groupUserManagementRoutes');
 
 const app = express();
 
@@ -18,10 +19,11 @@ mongoose.connect('mongodb://localhost:27017/aroundu')
 app.get('/', (req, res) => {
     res.send('Hello World');
 });
-//app.use('/users', userRoutes);
+
 app.use('/auth', authRoutes);
 app.use('/user', userRoutes);
 app.use('/group', groupRoutes);
+app.use('/group', groupUserManagementRoutes);
 
 const PORT = process.env.PORT || 3000;
 

@@ -13,7 +13,8 @@ router.get('/:groupId', async (req, res) => {
             return res.status(400).json({ error: 'Group ID is required' });
         }
         const group = await Group.findById(groupId)
-            .select('-_id -__v -createdAt -updatedAt');
+            // banned users and join requests might be sensitive info
+            .select('-_id -__v -createdAt -updatedAt -joinRequests -bannedUsers');
         if (!group) {
             return res.status(404).json({ error: 'Group not found' });
         }
@@ -90,7 +91,7 @@ router.put('/:groupId/general', verifyToken, async (req, res) => {
         await group.save();
         res.status(200).json({ group });
     } catch (err) {
-        req.status(500).json({ error: err.message });
+        res.status(500).json({ error: err.message });
     }
 });
 
@@ -128,41 +129,7 @@ router.put('/:groupId/location', verifyToken, async (req, res) => {
         await group.save();
         res.status(200).json({ group });
     } catch (err) {
-        req.status(500).json({ error: err.message });
-    }
-});
-
-router.put('/join/:groupId', verifyToken, async (req, res) => {
-    try {
-        const userId = req.userId;
-        if (!userId) {
-            return res.status(403).json({ error: 'Unauthorized' });
-        }
-        const user = await User.findById(userId);
-        if (!user) {
-            return res.status(404).json({ error: 'User not found' });
-        }
-
-        const groupId = req.params.groupId;
-        if (!groupId) {
-            return res.status(400).json({ error: 'Group ID is required' });
-        }
-        const group = await Group.findById(groupId);
-        if (!group) {
-            return res.status(404).json({ error: 'Group not found' });
-        }
-
-        // group needs to be freely joinable for user to join directly
-        if (!group.everyoneCanJoin) {
-            return res.status(403).json({ error: 'Not allowed' });
-        }
-
-        // if everyone can join then the user is added to the members list
-        group.members.push({ member: userId, permission: 0 });
-        await group.save();
-        res.status(200).json({ group });
-    } catch (err) {
-        req.status(500).json({ error: err.message });
+        res.status(500).json({ error: err.message });
     }
 });
 
@@ -195,7 +162,7 @@ router.delete('/:groupId', verifyToken, async (req, res) => {
         await Group.findByIdAndDelete(groupId);
         res.status(200).json({ message: 'Group deleted successfully' });
     } catch (err) {
-        req.status(500).json({ error: err.message });
+        res.status(500).json({ error: err.message });
     }
 });
 

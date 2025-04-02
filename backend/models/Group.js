@@ -34,25 +34,71 @@ const groupSchema = new mongoose.Schema({
     members: { // array of users in group, with their _id and permission level
         type: [
             {
-                member: mongoose.Types.ObjectId,
+                member: { type: mongoose.Types.ObjectId, ref: 'User' },
                 permission: {
                     type: Number,
                     default: 0 // default permission level is member
+                },
+                joinedAt: {
+                    type: Date,
+                    default: Date.now // time when user joins group
                 },
                 _id: false // otherwise each member object will have it's own id in the members array
             }
         ],
         required: true,
         default: []
-    }
+    },
     /*
     permission levels:
     0 = member -> can view and post messages
-    1 = moderator -> can manage members and messages
-    2 = admin -> can manage group settings
+    1 = moderator -> can kick members and manage messages
+    2 = admin -> can ban users and manage group settings
     3 = owner -> owns the group, can give/take permissions and delete group
+
+    members can grant permissions to others as high as a level below their own:
+    - admin makes member a moderator or normal member
+    - owner makes member a moderator, admin or normal member
+    - normal members and moderators can't change permissions for anyone ;-;
     */
+    joinRequests: { // array of users that requested to join group, with their _id and request time
+        type: [
+            {
+                userId: { type: mongoose.Types.ObjectId, ref: 'User' },
+                requestedAt: {
+                    type: Date,
+                    default: Date.now // time when user requests to join group
+                },
+                _id: false // otherwise each joinRequests object will have it's own id in the joinRequests array
+            }
+        ],
+        required: false,
+        default: []
+    },
+   // join requests may be optional in case everyone can freely join the group
+   bannedUsers: { // array of users that were banned from group, with their _id and ban time
+        type: [
+            {
+                userId: { type: mongoose.Types.ObjectId, ref: 'User' },
+                bannedAt: {
+                    type: Date,
+                    default: Date.now // time when user is banned from group
+                },
+                _id: false // otherwise each bannedUsers object will have it's own id in the bannedUsers array
+            }
+        ],
+        required: false,
+        default: []
+   }
 }, { timestamps: true });
+
+/*
+the reason why group members, join requests and banned users are stored in arrays inside a group document
+instead of a separate document is that it requires less queries ("joins"/populates) and it also doesn't take
+up as much valuable space inside the db
+
+this will most likely change if backend db is changed to rdbms
+*/
 
 const Group = mongoose.model('Group', groupSchema);
 module.exports = Group;

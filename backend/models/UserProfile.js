@@ -11,6 +11,7 @@ const userProfileSchema = new mongoose.Schema({
         required: true,
     },
     bio: String,
+    userIcon: String, // url or path to group icon, I'll see :p
     friends: {
         type: [mongoose.Types.ObjectId], // array of user _ids
         default: []
