@@ -8,6 +8,7 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 
 const JWT_SECRET = process.env.JWT_SECRET;
+const JWT_EXPIRY = process.env.JWT_EXPIRY || '1h';
 
 const router = express.Router();
 
@@ -55,7 +56,7 @@ router.post('/login', async (req, res) => {
 
         // why can you not just use the environment variable directly??
         const token = jwt.sign({ userId: user._id }, `${JWT_SECRET}`, {
-            expiresIn: '1h',
+            expiresIn: `${JWT_EXPIRY}`,
         });
         res.status(200).json({ token });
     } catch (err) {

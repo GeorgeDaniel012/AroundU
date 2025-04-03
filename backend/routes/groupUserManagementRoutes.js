@@ -87,7 +87,7 @@ router.put('/:groupId/requests/:requestingUserId', verifyToken, async (req, res)
         if (!requestingUserId) {
             return res.status(400).json({ error: 'User ID is required' });
         }
-        const requestingUser = await Group.findById(requestingUserId);
+        const requestingUser = await User.findById(requestingUserId);
         if (!requestingUser) {
             return res.status(404).json({ error: 'Requesting user not found' });
         }
@@ -107,7 +107,7 @@ router.put('/:groupId/requests/:requestingUserId', verifyToken, async (req, res)
 
         const { isAccepted } = req.body();
         if (isAccepted === true){
-            group.members.push({ member: requestingUserId, permission: 0, joinedAt: Date.now });
+            group.members.push({ member: requestingUserId, permission: 0 });
         }
 
         // delete the join request no matter if it's accepted or not
@@ -145,17 +145,63 @@ router.put('/join/:groupId', verifyToken, async (req, res) => {
             return res.status(400).json({ message: 'User already in group' });
         }
 
+        const userIsBanned = group.bannedUsers.some(user => user.userId.equals(userId));
+        if (userIsBanned) {
+            return res.status(400).json({ message: 'User is banned from group' });
+        }
+
         // group needs to be freely joinable for user to join directly
         // else the user sends a join request
         if (!group.everyoneCanJoin) {
-            group.joinRequests.push({ userId: userId, requestedAt: Date.now });
+            group.joinRequests.push({ userId: userId }); // manually putting requestedAt to Date.now errors out
+                                                         // so I'm gonna let it be added by default
             return res.status(200).json({ message: 'Group join request sent successfully' });
         }
 
         // if everyone can join then the user is added to the members list
-        group.members.push({ member: userId, permission: 0, joinedAt: Date.now });
+        group.members.push({ member: userId, permission: 0 }); // manually putting joinedAt to Date.now errors out
+                                                               // so I'm gonna let it be added by default
         await group.save();
         res.status(200).json({ message: 'Group joined successfully' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+router.put('/leave/:groupId', verifyToken, async (req, res) => {
+    try {
+        const userId = req.userId;
+        if (!userId) {
+            return res.status(403).json({ error: 'Unauthorized' });
+        }
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        const groupId = req.params.groupId;
+        if (!groupId) {
+            return res.status(400).json({ error: 'Group ID is required' });
+        }
+        const group = await Group.findById(groupId);
+        if (!group) {
+            return res.status(404).json({ error: 'Group not found' });
+        }
+
+        // ofc, a user needs to be in a group to be able to leave that group
+        const userInGroup = group.members.find(member => member.member.equals(userId));
+        if (!userInGroup) {
+            return res.status(400).json({ message: 'User not in group' });
+        }
+        // if user is group owner they cannot leave before transferring ownership
+        if (userInGroup.permission === 3) {
+            return res.status(400).json({ message: 'User is owner of group' });
+        }
+
+        // user is removed from member list
+        group.members = group.members.filter(member => !member.member.equals(userId));
+        await group.save();
+        res.status(200).json({ message: 'Group left successfully' });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
@@ -185,7 +231,7 @@ router.put('/:groupId/ban/:bannedUserId', verifyToken, async (req, res) => {
         if (!bannedUserId) {
             return res.status(400).json({ error: 'User ID is required' });
         }
-        const bannedUser = await Group.findById(bannedUserId);
+        const bannedUser = await User.findById(bannedUserId);
         if (!bannedUser) {
             return res.status(404).json({ error: 'User to be banned not found' });
         }
@@ -202,9 +248,56 @@ router.put('/:groupId/ban/:bannedUserId', verifyToken, async (req, res) => {
         // if user is in group they are removed
         group.members = group.members.filter(member => !member.member.equals(bannedUserId));
         // they are then added to banned user list
-        group.bannedUsers.push({ userId: bannedUserId, bannedAt: Date.now });
+        group.bannedUsers.push({ userId: bannedUserId });
         await group.save();
         res.status(200).json({ message: 'User banned successfully' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+router.put('/:groupId/unban/:unbannedUserId', verifyToken, async (req, res) => {
+    try {
+        const userId = req.userId;
+        if (!userId) {
+            return res.status(403).json({ error: 'Unauthorized' });
+        }
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        const groupId = req.params.groupId;
+        if (!groupId) {
+            return res.status(400).json({ error: 'Group ID is required' });
+        }
+        const group = await Group.findById(groupId);
+        if (!group) {
+            return res.status(404).json({ error: 'Group not found' });
+        }
+
+        const unbannedUserId = req.params.unbannedUserId;
+        if (!unbannedUserId) {
+            return res.status(400).json({ error: 'User ID is required' });
+        }
+        const unbannedUser = await User.findById(unbannedUserId);
+        if (!unbannedUser) {
+            return res.status(404).json({ error: 'User to be unbanned not found' });
+        }
+        
+        // authenticated user needs to be admin or owner to unban users
+        const permittedUser = group.members.find(member => member.member.equals(userId) && member.permission >= 2);
+        const toBeUnbannedUser = group.bannedUsers.find(user => user.userId.equals(unbannedUserId));
+        // so if no user that was previously banned with this id exists
+        // or user is not permitted to unban
+        if (!permittedUser || !toBeUnbannedUser) {
+            return res.status(403).json({ error: 'Not allowed' });
+        }
+
+        // user is removed from ban list
+        group.bannedUsers = group.bannedUsers.filter(user => !user.userId.equals(unbannedUserId));
+        await group.save();
+        res.status(200).json({ message: 'User unbanned successfully' });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
@@ -234,7 +327,7 @@ router.put('/:groupId/kick/:kickedUserId', verifyToken, async (req, res) => {
         if (!kickedUserId) {
             return res.status(400).json({ error: 'User ID is required' });
         }
-        const kickedUser = await Group.findById(kickedUserId);
+        const kickedUser = await User.findById(kickedUserId);
         if (!kickedUser) {
             return res.status(404).json({ error: 'User to be kicked not found' });
         }
@@ -257,6 +350,7 @@ router.put('/:groupId/kick/:kickedUserId', verifyToken, async (req, res) => {
     }
 });
 
+// give permission levels 0-2 to other members
 router.put('/:groupId/permissions/:groupMemberId', verifyToken, async (req, res) => {
     try {
         const userId = req.userId;
@@ -281,12 +375,15 @@ router.put('/:groupId/permissions/:groupMemberId', verifyToken, async (req, res)
         if (!groupMemberId) {
             return res.status(400).json({ error: 'User ID is required' });
         }
-        const groupMember = await Group.findById(groupMemberId);
+        const groupMember = await User.findById(groupMemberId);
         if (!groupMember) {
             return res.status(404).json({ error: 'User to be granted permissions not found' });
         }
 
         const { permissionLevel } = req.body; // is a number between 0-2 preferably!
+        if (permissionLevel > 3 || permissionLevel < 0) {
+            return res.status(400).json({ error: 'Invalid permission level' });
+        }
         
         // authenticated user can grant permissions only as high as a level below their own
         const permittedUser = group.members.find(member => member.member.equals(userId));
@@ -309,6 +406,65 @@ router.put('/:groupId/permissions/:groupMemberId', verifyToken, async (req, res)
         });
         await group.save();
         res.status(200).json({ message: 'User granted permissions successfully' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// transfer ownership to another person as owner
+// i.e. give them level 3
+// the previous owner becomes admin instead (level 2)
+router.put('/:groupId/transfer/:groupMemberId', verifyToken, async (req, res) => {
+    try {
+        const userId = req.userId;
+        if (!userId) {
+            return res.status(403).json({ error: 'Unauthorized' });
+        }
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        const groupId = req.params.groupId;
+        if (!groupId) {
+            return res.status(400).json({ error: 'Group ID is required' });
+        }
+        const group = await Group.findById(groupId);
+        if (!group) {
+            return res.status(404).json({ error: 'Group not found' });
+        }
+
+        const groupMemberId = req.params.groupMemberId;
+        if (!groupMemberId) {
+            return res.status(400).json({ error: 'User ID is required' });
+        }
+        const groupMember = await User.findById(groupMemberId);
+        if (!groupMember) {
+            return res.status(404).json({ error: 'User to be granted permissions not found' });
+        }
+        
+        // only owner can transfer ownership
+        const permittedUser = group.members.find(member => member.member.equals(userId) && member.permission === 3);
+        const toBeGrantedPermissionsUser = group.members.find(member => member.member.equals(groupMemberId));
+        // so if no user with that userId and also sufficient permissions exists
+        if (!permittedUser || !toBeGrantedPermissionsUser) { 
+            return res.status(403).json({ error: 'Not allowed' });
+        }
+
+        group.members.map(member => {
+            // for the user who is becoming new owner
+            if (member.member.equals(groupMemberId)) {
+                member.permission = 3;
+            }
+
+            // for the previous owner
+            if (member.member.equals(userId)) {
+                member.permission = 2;
+            }
+            return member;
+        });
+        await group.save();
+        res.status(200).json({ message: 'Transferred ownership to user successfully' });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }

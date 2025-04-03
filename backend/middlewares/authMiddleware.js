@@ -5,12 +5,12 @@ const jwt = require('jsonwebtoken');
 const JWT_SECRET = process.env.JWT_SECRET;
 
 function verifyToken(req, res, next) {
-    // authorization header is a bearer token =>
-    // => it starts with "Bearer "
     if (!req.headers.authorization) { // so if there isn't an authorization header
         return res.status(401).json({ error: 'Unauthorized' });
     }
 
+    // authorization header is a bearer token =>
+    // => it starts with "Bearer "
     const token = req.headers.authorization.split(' ')[1];
     if (!token) {
         return res.status(401).json({ error: 'Unauthorized' });
