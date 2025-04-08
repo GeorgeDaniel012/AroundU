@@ -21,11 +21,11 @@ router.get('/profile/:username', async (req, res) => {
         }
         
         const userProfile = await UserProfile.findOne({ userId: user._id })
-            .select('displayName bio friends'); // only include wanted fields
+            .select('displayName bio'); // only include wanted fields
         if (!userProfile) {
             return res.status(404).json({ error: 'User not found' });
         }
-        res.status(200).json({ userProfile });
+        res.status(200).json({ ...userProfile, friends: user.friends });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }

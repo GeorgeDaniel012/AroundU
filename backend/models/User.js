@@ -17,6 +17,10 @@ const userSchema = new mongoose.Schema({
         required: true,
         unique: true,
     },
+    friends: {
+        type: [mongoose.Types.ObjectId], // array of user _ids
+        default: []
+    },
 }, { timestamps: true });
 
 const User = mongoose.model('User', userSchema);
