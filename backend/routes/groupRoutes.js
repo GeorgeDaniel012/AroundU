@@ -88,6 +88,10 @@ router.put('/:groupId/general', verifyToken, async (req, res) => {
         group.description = description;
         group.tags = tags;
         group.everyoneCanJoin = everyoneCanJoin;
+
+        if (everyoneCanJoin) group.joinRequests = []; // if everyoneCanJoin is set to true delete all requests
+                                                      // like what twitter does with follow requests
+
         await group.save();
         res.status(200).json({ group });
     } catch (err) {

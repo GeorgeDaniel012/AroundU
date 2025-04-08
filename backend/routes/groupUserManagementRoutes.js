@@ -17,6 +17,10 @@ router.get('/:groupId/ban', verifyToken, async (req, res) => {
         if (!groupId) {
             return res.status(400).json({ error: 'Group ID is required' });
         }
+        const group = await Group.findById(groupId).select('members bannedUsers');
+        if (!group) {
+            return res.status(404).json({ error: 'Group not found' });
+        }
 
         // user needs to be admin or owner to see banned users
         const hasPermission = group.members.some(member => member.member.equals(userId) && member.permission >= 2);
@@ -24,11 +28,7 @@ router.get('/:groupId/ban', verifyToken, async (req, res) => {
             return res.status(403).json({ error: 'Not allowed' });
         }
 
-        const group = await Group.findById(groupId).select('bannedUsers');
-        if (!group) {
-            return res.status(404).json({ error: 'Group not found' });
-        }
-        return res.status(200).json({ group });
+        return res.status(200).json({ bannedUsers: group.bannedUsers });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
@@ -45,6 +45,10 @@ router.get('/:groupId/requests', verifyToken, async (req, res) => {
         if (!groupId) {
             return res.status(400).json({ error: 'Group ID is required' });
         }
+        const group = await Group.findById(groupId).select('members joinRequests');
+        if (!group) {
+            return res.status(404).json({ error: 'Group not found' });
+        }
 
         // user needs to be admin or owner to see join requests
         const hasPermission = group.members.some(member => member.member.equals(userId) && member.permission >= 2);
@@ -52,11 +56,7 @@ router.get('/:groupId/requests', verifyToken, async (req, res) => {
             return res.status(403).json({ error: 'Not allowed' });
         }
 
-        const group = await Group.findById(groupId).select('joinRequests');
-        if (!group) {
-            return res.status(404).json({ error: 'Group not found' });
-        }
-        return res.status(200).json({ group });
+        return res.status(200).json({ joinRequests: group.joinRequests });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
@@ -105,7 +105,7 @@ router.put('/:groupId/requests/:requestingUserId', verifyToken, async (req, res)
             return res.status(404).json({ error: 'User hasn\'t sent request' });
         }
 
-        const { isAccepted } = req.body();
+        const { isAccepted } = req.body;
         if (isAccepted === true){
             group.members.push({ member: requestingUserId, permission: 0 });
         }
@@ -113,7 +113,7 @@ router.put('/:groupId/requests/:requestingUserId', verifyToken, async (req, res)
         // delete the join request no matter if it's accepted or not
         group.joinRequests = group.joinRequests.filter(request => !request.userId.equals(requestingUserId));
         await group.save();
-        res.status(200).json({ message: 'Join request successfully handled' });
+        res.status(200).json({ message: `Join request successfully ${isAccepted ? "accepted" : "rejected"}` });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
@@ -153,8 +153,15 @@ router.put('/join/:groupId', verifyToken, async (req, res) => {
         // group needs to be freely joinable for user to join directly
         // else the user sends a join request
         if (!group.everyoneCanJoin) {
+            // user needs to not have sent an existing request before
+            const userSentRequest = group.joinRequests.some(user => user.userId.equals(userId));
+            if (userSentRequest) {
+                return res.status(400).json({ message: 'User already sent join request' });
+            }
+
             group.joinRequests.push({ userId: userId }); // manually putting requestedAt to Date.now errors out
                                                          // so I'm gonna let it be added by default
+            await group.save();
             return res.status(200).json({ message: 'Group join request sent successfully' });
         }
 
