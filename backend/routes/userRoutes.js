@@ -4,28 +4,50 @@ const User = require('../models/User');
 const UserProfile = require('../models/UserProfile');
 const verifyToken = require('../middlewares/authMiddleware');
 const bcrypt = require('bcrypt');
+const Group = require('../models/Group');
 
 const router = express.Router();
 
-router.get('/profile/:username', async (req, res) => {
+router.get('/profile/:userId', async (req, res) => {
     try {
-        const username = req.params.username;
+        const userId = req.params.userId;
         // this route is public, so no need for token verification
-        if (!username) {
-            return res.status(400).json({ error: 'Username is required' });
+        if (!userId) {
+            return res.status(400).json({ error: 'User ID is required' });
         }
 
-        const user = await User.findOne({ username });
+        const user = await User.findOne({ _id: userId }).select('friends');
         if (!user) {
             return res.status(404).json({ error: 'User not found' });
         }
         
-        const userProfile = await UserProfile.findOne({ userId: user._id })
+        const userProfile = await UserProfile.findOne({ userId: userId })
             .select('displayName bio'); // only include wanted fields
         if (!userProfile) {
             return res.status(404).json({ error: 'User not found' });
         }
-        res.status(200).json({ ...userProfile, friends: user.friends });
+        res.status(200).json({ ...userProfile._doc, friends: user.friends });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+router.get('/profile/:userId/groups', async (req, res) => {
+    try {
+        const userId = req.params.userId;
+        // this route is public, so no need for token verification
+        if (!userId) {
+            return res.status(400).json({ error: 'User ID is required' });
+        }
+
+        const user = await User.findOne({ _id: userId }).select('friends');
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+        
+        const groups = await Group.find({ "members.member": userId })
+            .select('_id groupName theme');
+        res.status(200).json({ groups });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
