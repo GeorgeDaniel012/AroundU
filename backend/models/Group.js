@@ -24,10 +24,17 @@ const groupSchema = new mongoose.Schema({
     },
     location: {
         type: {
-            lat: mongoose.Types.Decimal128,
-            long: mongoose.Types.Decimal128
+            // lat: mongoose.Types.Decimal128,
+            // lon: mongoose.Types.Decimal128
+            type: String,
+            enum: ['Point'],
+            required: true
         },
-        required: true, // groups should have defined location,
+        coordinates: {
+            type: [Number], // will be actually [longitude, latitude]
+            required: true
+        },
+        //required: true, // groups should have defined location,
                         // don't know how remote groups would work
         _id: false // otherwise location object will have it's own id, which is useless
     },

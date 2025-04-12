@@ -3,6 +3,7 @@ const mongoose = require('mongoose');
 const Group = require('../models/Group');
 const User = require('../models/User');
 const verifyToken = require('../middlewares/authMiddleware');
+// const geolib = require('geolib');
 
 const router = express.Router();
 
@@ -14,11 +15,54 @@ router.get('/:groupId', async (req, res) => {
         }
         const group = await Group.findById(groupId)
             // banned users and join requests might be sensitive info
-            .select('-_id -__v -createdAt -updatedAt -joinRequests -bannedUsers');
+            .select('-__v -createdAt -updatedAt -joinRequests -bannedUsers');
         if (!group) {
             return res.status(404).json({ error: 'Group not found' });
         }
-        return res.status(200).json({ group });
+        return res.status(200).json( group );
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// get all routes within a certain radius from a point (which is to be user's location)
+router.get('/', async (req, res) => {
+    try {
+        const { lat, lon, radius } = req.body; // radius in meters
+
+        if (typeof lat === "undefined" || typeof lon === "undefined") {
+            return res.status(400).json({ error: 'Latitude and longitude are required' });
+        }
+        if (lat < -90 || lat > 90) {
+            return res.status(400).json({ error: 'Latitude must be between -90 and 90' });
+        }
+        if (lon < -180 || lon > 180) {
+            return res.status(400).json({ error: 'Longitude must be between -180 and 180' });
+        }
+        if (typeof radius === "undefined") {
+            return res.status(400).json({ error: 'Radius is required' });
+        }
+        if (radius < 0) {
+            return res.status(400).json({ error: 'Radius must be positive' });
+        }
+
+        const groups = await Group.find({
+            location: {
+                $near: {
+                    $geometry: {
+                        type: 'Point',
+                        coordinates: [lon, lat]
+                    },
+                    $maxDistance: radius
+                }
+            }
+        })
+            // arbitrary limit, might change 
+            .limit(50) 
+            // banned users and join requests might be sensitive info
+            .select('-__v -createdAt -updatedAt -joinRequests -bannedUsers');
+        
+        return res.status(200).json( groups );
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
@@ -32,9 +76,18 @@ router.post('/', verifyToken, async (req, res) => {
             return res.status(403).json({ error: 'Unauthorized' });
         }
 
-        const { groupName, theme, description, tags, everyoneCanJoin, lat, long } = req.body;
-        if (!groupName || !theme || !description) {
+        const { groupName, theme, description, tags, everyoneCanJoin, lat, lon } = req.body;
+        if (typeof groupName === "undefined" || typeof theme === "undefined" || typeof description === "undefined") {
             return res.status(400).json({ error: 'Group name, theme, and description are required' });
+        }
+        if (typeof lat === "undefined" || typeof lon === "undefined") {
+            return res.status(400).json({ error: 'Latitude and longitude are required' });
+        }
+        if (lat < -90 || lat > 90) {
+            return res.status(400).json({ error: 'Latitude must be between -90 and 90' });
+        }
+        if (lon < -180 || lon > 180) {
+            return res.status(400).json({ error: 'Longitude must be between -180 and 180' });
         }
 
         const group = new Group({
@@ -43,11 +96,14 @@ router.post('/', verifyToken, async (req, res) => {
             description,
             tags,
             everyoneCanJoin,
-            location: { lat, long },
+            location: { 
+                type: 'Point',
+                coordinates: [lon, lat]
+            },
             members: [{ member: userId, permission: 3 }] // owner has permission level 3
         });
         await group.save();
-        res.status(201).json({ group });
+        res.status(201).json( group );
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
@@ -83,17 +139,16 @@ router.put('/:groupId/general', verifyToken, async (req, res) => {
 
         // preferably frontend should return these fields with the correct datatypes
         const { groupName, theme, description, tags, everyoneCanJoin } = req.body;
-        group.groupName = groupName;
-        group.theme = theme;
-        group.description = description;
-        group.tags = tags;
-        group.everyoneCanJoin = everyoneCanJoin;
-
+        if (typeof groupName !== "undefined") group.groupName = groupName;
+        if (typeof theme !== "undefined") group.theme = theme;
+        if (typeof description !== "undefined") group.description = description;
+        if (typeof tags !== "undefined") group.tags = tags;
+        if (typeof everyoneCanJoin !== "undefined") group.everyoneCanJoin = everyoneCanJoin;
         if (everyoneCanJoin) group.joinRequests = []; // if everyoneCanJoin is set to true delete all requests
                                                       // like what twitter does with follow requests
 
         await group.save();
-        res.status(200).json({ group });
+        res.status(200).json( group );
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
@@ -127,11 +182,23 @@ router.put('/:groupId/location', verifyToken, async (req, res) => {
             return res.status(403).json({ error: 'Not allowed' });
         }
 
-        const { lat, long } = req.body;
-        group.location.lat = lat;
-        group.location.long = long;
+        const { lat, lon } = req.body;
+        if (!lat || !lon) {
+            return res.status(400).json({ error: 'Latitude and longitude are required' });
+        }
+        if (lat < -90 || lat > 90) {
+            return res.status(400).json({ error: 'Latitude must be between -90 and 90' });
+        }
+        if (lon < -180 || lon > 180) {
+            return res.status(400).json({ error: 'Longitude must be between -180 and 180' });
+        }
+
+        group.location = { 
+            type: 'Point',
+            coordinates: [lon, lat]
+        };
         await group.save();
-        res.status(200).json({ group });
+        res.status(200).json( group );
     } catch (err) {
         res.status(500).json({ error: err.message });
     }

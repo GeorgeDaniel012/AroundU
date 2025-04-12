@@ -34,7 +34,7 @@ router.post('/register', async (req, res) => {
         const userProfile = new UserProfile({ userId: user._id, displayName: username });
         await user.save();
         await userProfile.save();
-        res.status(201).json({ user });
+        res.status(201).json( user );
     } catch (err) {
         res.status(500).json({ error: err.message });
     }

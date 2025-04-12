@@ -47,7 +47,7 @@ router.get('/profile/:userId/groups', async (req, res) => {
         
         const groups = await Group.find({ "members.member": userId })
             .select('_id groupName theme');
-        res.status(200).json({ groups });
+        res.status(200).json( groups );
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
@@ -63,15 +63,16 @@ router.put('/update', verifyToken, async (req, res) => {
         }
 
         const { displayName, bio } = req.body;
+
         const userProfile = await UserProfile.findOne({ userId });
         if (!userProfile) {
             return res.status(404).json({ error: 'User not found' });
         }
 
-        userProfile.displayName = displayName;
-        userProfile.bio = bio;
+        if (typeof displayName !== "undefined") userProfile.displayName = displayName;
+        if (typeof bio !== "undefined") userProfile.bio = bio;
         await userProfile.save();
-        res.status(200).json({ userProfile });
+        res.status(200).json( userProfile );
     } catch (err) {
         res.status(500).json({ error: err.message });
     }

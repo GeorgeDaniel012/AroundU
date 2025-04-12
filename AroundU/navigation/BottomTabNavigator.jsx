@@ -7,6 +7,8 @@ const Tab = createBottomTabNavigator();
 import HomeScreen from "../screens/HomeScreen";
 import DiscoverScreen from "../screens/DiscoverScreen";
 import GroupsScreen from "../screens/GroupsScreen";
+import SettingsScreen from "../screens/SettingsScreen";
+import { Dimensions } from "react-native";
 
 const Tabs = () => {
     return (
@@ -24,17 +26,23 @@ const Tabs = () => {
                         iconName = "search";
                     } else if (route.name === "Groups") {
                         iconName = "users";
+                    } else if (route.name === "Settings") {
+                        iconName = "cog";
                     }
                     
                     return <Icon name={iconName} size={size} color={color} />;
                 },
                 tabBarActiveTintColor: "tomato",
                 tabBarInactiveTintColor: "gray",
+                //tabBarIconStyle: { fontSize: 48, height: 48 },
+                tabBarLabelStyle: { fontSize: 20 },
+                tabBarStyle: { height:80, paddingTop: 10, paddingBottom: 10 }//{ height: 2 * Dimensions.get('screen').height / 375 }
             })}
         >
-            <Tab.Screen name="Discover" component={DiscoverScreen} />
             <Tab.Screen name="Home" component={HomeScreen} />
+            <Tab.Screen name="Discover" component={DiscoverScreen} />
             <Tab.Screen name="Groups" component={GroupsScreen} />
+            <Tab.Screen name="Settings" component={SettingsScreen} />
         </Tab.Navigator>
     );
 }
