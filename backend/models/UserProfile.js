@@ -5,6 +5,7 @@ const userProfileSchema = new mongoose.Schema({
         type: mongoose.Types.ObjectId,
         required: true,
         unique: true,
+        ref: 'User'
     },
     displayName: {
         type: String,

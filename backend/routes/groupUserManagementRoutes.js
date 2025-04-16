@@ -108,6 +108,9 @@ router.put('/:groupId/requests/:requestingUserId', verifyToken, async (req, res)
         const { isAccepted } = req.body;
         if (isAccepted === true){
             group.members.push({ member: requestingUserId, permission: 0 });
+
+            requestingUser.groups.push(group._id);
+            await requestingUser.save();
         }
 
         // delete the join request no matter if it's accepted or not
@@ -169,6 +172,9 @@ router.put('/join/:groupId', verifyToken, async (req, res) => {
         group.members.push({ member: userId, permission: 0 }); // manually putting joinedAt to Date.now errors out
                                                                // so I'm gonna let it be added by default
         await group.save();
+
+        user.groups.push(group._id);
+        await user.save();
         res.status(200).json({ message: 'Group joined successfully' });
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -208,6 +214,10 @@ router.put('/leave/:groupId', verifyToken, async (req, res) => {
         // user is removed from member list
         group.members = group.members.filter(member => !member.member.equals(userId));
         await group.save();
+
+        user.groups = user.groups.filter(group => !group.equals(groupId));
+        await user.save();
+
         res.status(200).json({ message: 'Group left successfully' });
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -257,6 +267,10 @@ router.put('/:groupId/ban/:bannedUserId', verifyToken, async (req, res) => {
         // they are then added to banned user list
         group.bannedUsers.push({ userId: bannedUserId });
         await group.save();
+
+        // if user is in group the group is removed from their list
+        bannedUser.groups = bannedUser.groups.filter(group => !group.equals(groupId));
+        await bannedUser.save();
         res.status(200).json({ message: 'User banned successfully' });
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -351,6 +365,10 @@ router.put('/:groupId/kick/:kickedUserId', verifyToken, async (req, res) => {
         // user is removed from group
         group.members = group.members.filter(member => !member.member.equals(kickedUserId));
         await group.save();
+
+        // group is removed from user's list
+        kickedUser.groups = kickedUser.groups.filter(group => !group.equals(groupId));
+        await kickedUser.save();
         res.status(200).json({ message: 'User kicked successfully' });
     } catch (err) {
         res.status(500).json({ error: err.message });

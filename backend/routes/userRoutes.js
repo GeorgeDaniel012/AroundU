@@ -40,14 +40,14 @@ router.get('/profile/:userId/groups', async (req, res) => {
             return res.status(400).json({ error: 'User ID is required' });
         }
 
-        const user = await User.findOne({ _id: userId }).select('friends');
+        const user = await User.findById(userId)
+            .select('groups')
+            .populate('groups', 'groupName theme tags');
         if (!user) {
             return res.status(404).json({ error: 'User not found' });
         }
         
-        const groups = await Group.find({ "members.member": userId })
-            .select('_id groupName theme');
-        res.status(200).json( groups );
+        res.status(200).json( user.groups );
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
@@ -78,6 +78,8 @@ router.put('/update', verifyToken, async (req, res) => {
     }
 });
 
+// code below is for "hard" deletion i.e. actually removing user from db
+/*
 router.delete('/delete', verifyToken, async (req, res) => {
     try {
         // an authenticated user can only delete their own account
@@ -98,6 +100,45 @@ router.delete('/delete', verifyToken, async (req, res) => {
             return res.status(404).json({ error: 'User not found' });
         }
         await User.findByIdAndDelete(userId);
+        res.status(200).json({ message: 'User deleted successfully' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+*/
+
+// code below is for "soft" deletion i.e. marking deleted users as deleted,
+// making their info anonymous but not removing them from db
+router.delete('/delete', verifyToken, async (req, res) => {
+    try {
+        // an authenticated user can only delete their own account
+        const userId = req.userId;
+        const { password } = req.body; // password to be verified again before deletion
+        if (!userId) {
+            return res.status(403).json({ error: 'Unauthorized' });
+        }
+
+        const user = await User.findById(userId);
+        const isPasswordMatch = await bcrypt.compare(password, user.password);
+        if (!isPasswordMatch) {
+            return res.status(403).json({ error: 'Incorrect password' });
+        }
+
+        const userProfile = await UserProfile.findOneAndDelete({ userId });
+        if (!userProfile) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        // user marked as deleted
+        user.isDeleted = true;
+        // user info is made anonymous
+        user.username = `DeletedUser${userId}`;
+        user.password = '';
+        user.email = `deleteduser${userId}@aroundu.com`;
+        user.groups = [];
+        user.friends = [];
+        
+        await user.save();
         res.status(200).json({ message: 'User deleted successfully' });
     } catch (err) {
         res.status(500).json({ error: err.message });

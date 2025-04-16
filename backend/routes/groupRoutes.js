@@ -25,8 +25,30 @@ router.get('/:groupId', async (req, res) => {
     }
 });
 
+router.get('/:groupId/members', async (req, res) => {
+    try {
+        const groupId = req.params.groupId;
+        if (!groupId) {
+            return res.status(400).json({ error: 'Group ID is required' });
+        }
+        const group = await Group.findById(groupId)
+            .select('members')
+            .populate('members.member', 'username');
+        if (!group) {
+            return res.status(404).json({ error: 'Group not found' });
+        }
+
+        // return only not deleted users
+        const memberList = group.members.filter(member => !member.isDeleted);
+
+        return res.status(200).json( memberList );
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 // get all routes within a certain radius from a point (which is to be user's location)
-router.get('/', async (req, res) => {
+router.post('/search', async (req, res) => {
     try {
         const { lat, lon, radius } = req.body; // radius in meters
 
@@ -75,6 +97,10 @@ router.post('/', verifyToken, async (req, res) => {
         if (!userId) {
             return res.status(403).json({ error: 'Unauthorized' });
         }
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
 
         const { groupName, theme, description, tags, everyoneCanJoin, lat, lon } = req.body;
         if (typeof groupName === "undefined" || typeof theme === "undefined" || typeof description === "undefined") {
@@ -103,6 +129,10 @@ router.post('/', verifyToken, async (req, res) => {
             members: [{ member: userId, permission: 3 }] // owner has permission level 3
         });
         await group.save();
+
+        user.groups.push(group._id);
+        await user.save();
+
         res.status(201).json( group );
     } catch (err) {
         res.status(500).json({ error: err.message });

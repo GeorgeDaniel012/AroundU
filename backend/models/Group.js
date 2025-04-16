@@ -36,7 +36,7 @@ const groupSchema = new mongoose.Schema({
         },
         //required: true, // groups should have defined location,
                         // don't know how remote groups would work
-        _id: false // otherwise location object will have it's own id, which is useless
+        _id: false // otherwise location object will have its own id, which is useless
     },
     members: { // array of users in group, with their _id and permission level
         type: [
@@ -106,6 +106,12 @@ up as much valuable space inside the db
 
 this will most likely change if backend db is changed to rdbms
 */
+
+// creates index on location so that geospatial queries can be made
+groupSchema.index({ location: '2dsphere' });
+// index for members so queries are optimized
+groupSchema.index({ "members.member": 1 });
+
 
 const Group = mongoose.model('Group', groupSchema);
 module.exports = Group;
