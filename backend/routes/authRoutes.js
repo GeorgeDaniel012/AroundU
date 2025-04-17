@@ -7,8 +7,10 @@ const UserProfile = require('../models/UserProfile');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 
-const JWT_SECRET = process.env.JWT_SECRET;
-const JWT_EXPIRY = process.env.JWT_EXPIRY || '1h';
+const JWT_SECRET_ACCESS = process.env.JWT_SECRET_ACCESS;
+const JWT_EXPIRY_ACCESS = process.env.JWT_EXPIRY_ACCESS || '1h';
+const JWT_SECRET_REFRESH = process.env.JWT_SECRET_REFRESH;
+const JWT_EXPIRY_REFRESH = process.env.JWT_EXPIRY_REFRESH || '2w';
 
 const router = express.Router();
 
@@ -34,6 +36,11 @@ router.post('/register', async (req, res) => {
         const userProfile = new UserProfile({ userId: user._id, displayName: username });
         await user.save();
         await userProfile.save();
+
+        // maybe this works??
+        // this should remove the password field from the user object
+        // in app memory, not from db!
+        delete user.password;
         res.status(201).json( user );
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -55,12 +62,44 @@ router.post('/login', async (req, res) => {
         }
 
         // why can you not just use the environment variable directly??
-        const token = jwt.sign({ userId: user._id }, `${JWT_SECRET}`, {
-            expiresIn: `${JWT_EXPIRY}`,
+        const accessToken = jwt.sign({ userId: user._id }, `${JWT_SECRET_ACCESS}`, {
+            expiresIn: `${JWT_EXPIRY_ACCESS}`,
         });
-        res.status(200).json({ token });
+        const refreshToken = jwt.sign({ userId: user._id }, `${JWT_SECRET_REFRESH}`, {
+            expiresIn: `${JWT_EXPIRY_REFRESH}`,
+        });
+
+        res.status(200)
+            // refresh token goes into cookie
+            .cookie('refreshToken', refreshToken, {
+                httpOnly: true,
+                sameSite: 'strict'
+            })
+            // access token goes into auth header
+            .header('Authorization', accessToken)
+            .json({ token: accessToken });
     } catch (err) {
         res.status(500).json({ error: err.message });
+    }
+});
+
+// for refreshing the access token
+router.post('/refresh', (req, res) => {
+    const refreshToken = req.cookies['refreshToken'];
+    if (!refreshToken) {
+        return res.status(401).json({ error: 'No refresh token' });
+    }
+
+    try {
+        const decodedRefreshToken = jwt.verify(refreshToken, JWT_SECRET_REFRESH);
+        const accessToken = jwt.sign({ userId: decodedRefreshToken.userId }, `${JWT_SECRET_ACCESS}`, {
+            expiresIn: `${JWT_EXPIRY_ACCESS}`,
+        });
+
+        res.header('Authorization', accessToken)
+            .json({ token: accessToken });
+    } catch (err) {
+        return res.status(400).json({ error: err.message });
     }
 });
 

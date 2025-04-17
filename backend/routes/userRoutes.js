@@ -135,8 +135,10 @@ router.delete('/delete', verifyToken, async (req, res) => {
         user.username = `DeletedUser${userId}`;
         user.password = '';
         user.email = `deleteduser${userId}@aroundu.com`;
-        user.groups = [];
-        user.friends = [];
+
+        // hopefully these changes being one way doesn't break anything!
+        //user.groups = [];
+        //user.friends = [];
         
         await user.save();
         res.status(200).json({ message: 'User deleted successfully' });

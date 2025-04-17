@@ -1,6 +1,7 @@
 require('dotenv').config();
 
 const express = require('express');
+const cookieParser = require('cookie-parser');
 const mongoose = require('mongoose');
 
 const authRoutes = require('./routes/authRoutes');
@@ -10,6 +11,7 @@ const groupUserManagementRoutes = require('./routes/groupUserManagementRoutes');
 
 const app = express();
 
+app.use(cookieParser());
 app.use(express.json());
 
 mongoose.connect('mongodb://localhost:27017/aroundu')
