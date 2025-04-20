@@ -31,6 +31,11 @@ router.post('/register', async (req, res) => {
             return res.status(400).json({ error: 'Another account already uses this email' });
         }
 
+        const emailInRightFormat = /^[^@]+@[^@]+\.[^@]+$/.test(email);
+        if (!emailInRightFormat) {
+            return res.status(400).json({ error: 'Email is not in correct format' });
+        }
+
         const hashedPassword = await bcrypt.hash(password, 10);
         const user = new User({ username, password: hashedPassword, email, });
         const userProfile = new UserProfile({ userId: user._id, displayName: username });

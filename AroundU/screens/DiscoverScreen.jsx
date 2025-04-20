@@ -15,7 +15,7 @@ const DiscoverScreen = () => {
                     headers: {
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({ lon: -152.989521, lat: -87, radius: 1200 })
+                    body: JSON.stringify({ lon: -152.989521, lat: -87, radius: 120000000 })
                 });
                 if (!response.ok) {
                     throw new Error(`Response status: ${response.status}`);

@@ -22,7 +22,7 @@ app.get('/', (req, res) => {
     res.send('Hello World');
 });
 
-app.use('/auth', authRoutes);
+app.use('/', authRoutes);
 app.use('/user', userRoutes);
 app.use('/group', groupRoutes);
 app.use('/group', groupUserManagementRoutes);

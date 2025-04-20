@@ -35,21 +35,24 @@ function verifyToken(req, res, next) {
         req.userId = decodedAccessToken.userId;
         next();
     } catch(err) {
-        if (!refreshToken) {
-            return res.status(401).json({ error: 'No refresh token' });
-        }
+        return res.status(401).json({ error: 'Unauthorized' });
+        // commented code refreshes access token if the refresh token is valid
+        // but I've decided to make the client refresh the access token manually instead
+//         if (!refreshToken) {
+//             return res.status(401).json({ error: 'No refresh token' });
+//         }
 
-        // refreshes access token
-        try {
-            const decodedRefreshToken = jwt.verify(refreshToken, JWT_SECRET_REFRESH);
-            const newAccessToken = jwt.sign({ userId: decodedRefreshToken.userId }, `${JWT_SECRET_ACCESS}`, {
-                        expiresIn: `${JWT_EXPIRY_ACCESS}`,
-            });
-            res.setHeader('Authorization', `Bearer ${newAccessToken}`);
-            next();
-        } catch (err) {
-            return res.status(400).json({ error: err.message });
-        }
+//         // refreshes access token
+//         try {
+//             const decodedRefreshToken = jwt.verify(refreshToken, JWT_SECRET_REFRESH);
+//             const newAccessToken = jwt.sign({ userId: decodedRefreshToken.userId }, `${JWT_SECRET_ACCESS}`, {
+//                         expiresIn: `${JWT_EXPIRY_ACCESS}`,
+//             });
+//             res.setHeader('Authorization', `Bearer ${newAccessToken}`);
+//             next();
+//         } catch (err) {
+//             return res.status(400).json({ error: err.message });
+//         }
     }
 }
 
