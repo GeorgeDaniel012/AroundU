@@ -116,7 +116,12 @@ apply from: "../../node_modules/react-native-vector-icons/fonts.gradle"
 dependencies {
     // The version of react-native is set by the React Native Gradle Plugin
     
-    implementation("com.facebook.react:react-android")
+    //implementation("com.facebook.react:react-android")
+    implementation("com.facebook.react:react-android") {
+        exclude group: 'com.google.android.gms', module: 'play-services-location'
+    }
+
+    implementation("com.google.android.gms:play-services-location:21.0.1")
 
     if (hermesEnabled.toBoolean()) {
         implementation("com.facebook.react:hermes-android")
@@ -124,3 +129,4 @@ dependencies {
         implementation jscFlavor
     }
 }
+apply from: project(':react-native-config').projectDir.getPath() + "/dotenv.gradle"

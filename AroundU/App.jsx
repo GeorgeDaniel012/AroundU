@@ -7,6 +7,7 @@ import ProfileScreen from "./screens/ProfileScreen";
 import LoginScreen from "./screens/LoginScreen";
 import { AuthProvider } from "./contexts/AuthContext";
 import SplashScreen from "./screens/SplashScreen";
+import GroupInfo from "./screens/GroupInfo";
 
 const Stack = createNativeStackNavigator();
 
@@ -20,6 +21,7 @@ function App() {
                     <Stack.Screen name="LoginScreen" component={LoginScreen} options={{ headerShown: false }}/>
                     <Stack.Screen name="MainBottomTabs" component={Tabs} options={{ headerShown: false }}/>
                     <Stack.Screen name="ProfileScreen" component={ProfileScreen} options={{ headerShown: false }}/>
+                    <Stack.Screen name="GroupInfo" component={GroupInfo} options={{ headerShown: false }}/>
                 </Stack.Navigator>
             </NavigationContainer>
         </AuthProvider>
