@@ -12,11 +12,11 @@ const SplashScreen = ({ navigation }) => {
         const hasRefreshed = await refresh();
         if (hasRefreshed) {
             console.log('Token was refreshed');
-            Alert.alert('Success', 'Token was refreshed');
+            //Alert.alert('Success', 'Token was refreshed');
             resetNavigationStack(navigation, 'MainBottomTabs');
         } else {
             console.log('Token couldn\'t be refreshed');
-            Alert.alert('Failure', 'Token couldn\'t be refreshed');
+            //Alert.alert('Failure', 'Token couldn\'t be refreshed');
             resetNavigationStack(navigation, 'LoginScreen');
         }
     }
