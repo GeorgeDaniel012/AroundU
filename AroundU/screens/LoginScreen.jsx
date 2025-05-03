@@ -78,9 +78,11 @@ const LoginScreen = ({ navigation }) => {
                 username: usernameField,
                 password: passwordField,
                 email: emailField
-            }, {
+            }/* , {
                 validateStatus: status => status < 500, // throw error if status is at least 500
-            }); 
+            } */); 
+
+            console.log('response', response);
 
             if (response.status >= 400 ) {
                 const errorMessage = response.data.error;

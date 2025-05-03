@@ -1,4 +1,5 @@
 import { useNavigation, CommonActions } from "@react-navigation/native";
+import { Dimensions } from "react-native";
 
 // resets navigation stack to one screen only
 export const resetNavigationStack = (navigation, screen) => {
@@ -36,3 +37,66 @@ export const distanceBetweenPoints = (userLocation, groupLocation) => {
 
     return dist;
 }
+
+export const themeList = [
+    {
+        "id": 1,
+        "filterName": "Arts",
+        "iconName": "palette"
+    },
+    {
+        "id": 2,
+        "filterName": "Sports",
+        "iconName": "volleyball-ball"
+    },
+    {
+        "id": 3,
+        "filterName": "Board Games",
+        "iconName": "chess-board"
+    },
+    {
+        "id": 4,
+        "filterName": "Social",
+        "iconName": "users"
+    },
+    {
+        "id": 5,
+        "filterName": "Travel",
+        "iconName": "plane"
+    },
+    {
+        "id": 6,
+        "filterName": "Video Games",
+        "iconName": "gamepad"
+    },
+    {
+        "id": 7,
+        "filterName": "Politics",
+        "iconName": "landmark"
+    },
+    {
+        "id": 8,
+        "filterName": "Tech",
+        "iconName": "microchip"
+    },
+    {
+        "id": 9,
+        "filterName": "Music",
+        "iconName": "music"
+    },
+    {
+        "id": 10,
+        "filterName": "Education",
+        "iconName": "book"
+    },
+    {
+        "id": 11,
+        "filterName": "Other",
+        "iconName": "question"
+    },
+];
+
+export const scaleSize = (size) => {
+    const baseWidth = 375; // baseline width
+    return size * (Dimensions.get('screen').width / baseWidth);
+};

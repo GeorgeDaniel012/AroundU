@@ -8,6 +8,7 @@ import LoginScreen from "./screens/LoginScreen";
 import { AuthProvider } from "./contexts/AuthContext";
 import SplashScreen from "./screens/SplashScreen";
 import GroupInfo from "./screens/GroupInfo";
+import CreateGroupScreen from "./screens/CreateGroupScreen";
 
 const Stack = createNativeStackNavigator();
 
@@ -15,13 +16,13 @@ function App() {
     return (
         <AuthProvider>
             <NavigationContainer>
-                {/* <Tabs /> */}
                 <Stack.Navigator>
                     <Stack.Screen name="SplashScreen" component={SplashScreen} options={{ headerShown: false }}/>
                     <Stack.Screen name="LoginScreen" component={LoginScreen} options={{ headerShown: false }}/>
                     <Stack.Screen name="MainBottomTabs" component={Tabs} options={{ headerShown: false }}/>
                     <Stack.Screen name="ProfileScreen" component={ProfileScreen} options={{ headerShown: false }}/>
                     <Stack.Screen name="GroupInfo" component={GroupInfo} options={{ headerShown: false }}/>
+                    <Stack.Screen name="CreateGroup" component={CreateGroupScreen} options={{ title: 'Create Group' }} />
                 </Stack.Navigator>
             </NavigationContainer>
         </AuthProvider>

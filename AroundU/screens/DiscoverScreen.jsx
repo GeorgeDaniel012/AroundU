@@ -5,60 +5,56 @@ import MapView, { Callout, Marker } from 'react-native-maps';
 import Geolocation from 'react-native-geolocation-service';
 import axiosInstance from '../utils/axiosInstance';
 import Icon from "react-native-vector-icons/FontAwesome5";
-import { distanceBetweenPoints } from '../utils/helpers';
+import { distanceBetweenPoints, scaleSize, themeList } from '../utils/helpers';
+import { CONNECTION } from '../config/config';
 
 const MarkerIcon = (props) => {
-    const { groupName } = props;
+    const { group } = props;
+    const [imageError, setImageError] = useState(false);
+
+    const getIconForTheme = (themeName) => {
+        const themeObj = themeList.find((theme) => theme.filterName === themeName);
+        // in case the theme is none of the predefined themes
+        // the icon used is the same one as the "other" icon
+        return themeObj ? themeObj.iconName : 'plus';
+    }
 
     return (
         <View style={{ flex: 1, flexDirection: 'row', justifyContent: 'center', alignItems: 'center' }}>
-            <Text style={{ fontSize: 20 }}>{groupName}</Text>
-            <Image
-                source={{ uri: 'https://d1nhio0ox7pgb.cloudfront.net/_img/o_collection_png/green_dark_grey/256x256/plain/check.png' }}
-                style={{ width: 40, height: 40 }}
+            {/* <Text style={{ fontSize: 20 }}>{group.groupName}</Text> */}
+            {/* <Image
+                //source={{ uri: 'https://d1nhio0ox7pgb.cloudfront.net/_img/o_collection_png/green_dark_grey/256x256/plain/check.png' }}
+                source={{ uri: imageError ? 'https://upload.wikimedia.org/wikipedia/commons/1/14/No_Image_Available.jpg' : `${CONNECTION}/static/${group._id}` }}
+                style={{ width: 38, height: 38 }}
                 resizeMode="contain"
-            />
+                onError={({nativeEvent: {error}}) => {
+                    console.log("err", error);
+                    setImageError(true);
+                }}
+            /> */}
+            {
+                imageError ?
+                <Icon
+                    name={getIconForTheme(group.theme)}
+                    size={32}
+                    color="black"
+                /> :
+                <Image
+                    source={{ uri: `${CONNECTION}/static/${group._id}` }}
+                    style={{ width: 38, height: 38 }}
+                    resizeMode="contain"
+                    onError={({nativeEvent: {error}}) => {
+                        console.log("err", error);
+                        setImageError(true);
+                    }}
+                />
+            }
         </View>
     );
 }
 
 const FilterModal = (props) => {
     const { radius, setRadius, themeFilter, setThemeFilter, isVisible, closeModal } = props;
-
-    const themeFilterBy = [
-        {
-            "id": 1,
-            "filterName": "Arts"
-        },
-        {
-            "id": 2,
-            "filterName": "Sports"
-        },
-        {
-            "id": 3,
-            "filterName": "Board Games"
-        },
-        {
-            "id": 4,
-            "filterName": "Video Games"
-        },
-        {
-            "id": 5,
-            "filterName": "Tech"
-        },
-        {
-            "id": 6,
-            "filterName": "Music"
-        },
-        {
-            "id": 7,
-            "filterName": "Education"
-        },
-        {
-            "id": 8,
-            "filterName": "Other"
-        },
-    ];
 
     const radiusSet = [
         {
@@ -102,7 +98,7 @@ const FilterModal = (props) => {
                 <View style={styles.modalContent}>
                     <Text>Filter by theme:</Text>
                     <FlatList
-                        data={themeFilterBy}
+                        data={themeList}
                         keyExtractor={(item) => item.id}
                         renderItem={({ item }) => (
                             <View style={{flex: 1, flexDirection: 'row', gap: 5, justifyContent: 'center', alignItems: 'center'}}>
@@ -213,7 +209,7 @@ const DiscoverScreen = ({ navigation }) => {
                     },
                 }
             );
-            
+
             const groups = await response.data;
             setGroups(groups);
             setMarkerList(groups);
@@ -351,7 +347,7 @@ const DiscoverScreen = ({ navigation }) => {
                                 {/* <Callout onPress={() => handlePressOnGroup(marker)}>
                                     <MarkerIconCallout groupName={marker.groupName}/>
                                 </Callout> */}
-                                <MarkerIcon groupName={marker.groupName}/>
+                                <MarkerIcon group={marker}/>
                             </Marker>
                         );
                     })
@@ -359,7 +355,7 @@ const DiscoverScreen = ({ navigation }) => {
                 {   // current location circle
                     locationGranted &&
                     <Marker coordinate={currentLocation} tracksViewChanges={false}>
-                        <Icon name="dot-circle" size={32} color="blue"/>
+                        <Icon name="dot-circle" size={scaleSize(32)} color="blue"/>
                     </Marker>
                 }
                 
@@ -370,13 +366,16 @@ const DiscoverScreen = ({ navigation }) => {
                 locationGranted && 
                 <>
                     <TouchableOpacity style={styles.locationButton} onPress={goToCurrentLocation}>
-                        <Icon name="compass" size={40} color="grey"/>
+                        <Icon name="compass" size={scaleSize(30)} color="grey"/>
                     </TouchableOpacity>
                     <TouchableOpacity style={styles.filterButton} onPress={() => setModalVisible(true)}>
-                        <Icon name="sliders-h" size={40} color="grey"/>
+                        <Icon name="sliders-h" size={scaleSize(30)} color="grey"/>
                     </TouchableOpacity>
                     <TouchableOpacity style={styles.refreshButton} onPress={fetchGroups}>
-                        <Icon name="sync" size={40} color="grey"/>
+                        <Icon name="sync" size={scaleSize(30)} color="grey"/>
+                    </TouchableOpacity>
+                    <TouchableOpacity style={styles.createButton} onPress={() => navigation.navigate("CreateGroup")}>
+                        <Icon name="plus" size={scaleSize(30)} color="grey"/>
                     </TouchableOpacity>
                 </>
             }
@@ -407,7 +406,7 @@ const styles = StyleSheet.create({
         left: 20,
         backgroundColor: 'rgba(255, 255, 255, 0.8)',
         padding: 10,
-        borderRadius: 5,
+        borderRadius: 70,
     },
     locationButton: {
         position: 'absolute',
@@ -415,7 +414,7 @@ const styles = StyleSheet.create({
         right: 20,
         backgroundColor: 'rgba(255, 255, 255, 0.8)',
         padding: 15,
-        borderRadius: 50,
+        borderRadius: 70,
     },
     filterButton: {
         position: 'absolute',
@@ -423,7 +422,7 @@ const styles = StyleSheet.create({
         right: 20,
         backgroundColor: 'rgba(255, 255, 255, 0.8)',
         padding: 15,
-        borderRadius: 50,
+        borderRadius: 70,
     },
     refreshButton: {
         position: 'absolute',
@@ -431,7 +430,15 @@ const styles = StyleSheet.create({
         left: 20,
         backgroundColor: 'rgba(255, 255, 255, 0.8)',
         padding: 15,
-        borderRadius: 50,
+        borderRadius: 70,
+    },
+    createButton: {
+        position: 'absolute',
+        bottom: 20,
+        left: 20,
+        backgroundColor: 'rgba(255, 255, 255, 0.8)',
+        padding: 15,
+        borderRadius: 70,
     },
     modalContainer: {
         flex: 1,

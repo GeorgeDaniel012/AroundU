@@ -3,7 +3,8 @@ const mongoose = require('mongoose');
 const Group = require('../models/Group');
 const User = require('../models/User');
 const verifyToken = require('../middlewares/authMiddleware');
-// const geolib = require('geolib');
+const { upload } = require('../middlewares/multerStorage');
+const { removeFileFromUploads } = require('../utils/storageHelpers');
 
 const router = express.Router();
 
@@ -234,6 +235,46 @@ router.put('/:groupId/location', verifyToken, async (req, res) => {
     }
 });
 
+// route for setting/uploading group picture
+router.put('/:groupId/pic', verifyToken, upload.single('groupIcon'), async (req, res) => {
+    try {
+        const userId = req.userId;
+        if (!userId) {
+            return res.status(403).json({ error: 'Unauthorized' });
+        }
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        const groupId = req.params.groupId;
+        if (!groupId) {
+            return res.status(400).json({ error: 'Group ID is required' });
+        }
+        const group = await Group.findById(groupId);
+        if (!group) {
+            return res.status(404).json({ error: 'Group not found' });
+        }
+        
+        // user needs to be part of the group they're editing
+        // and also an admin or owner
+        const hasPermission = group.members.some(member => member.member.equals(userId) && member.permission >= 2);
+        if (!hasPermission) {
+            return res.status(403).json({ error: 'Not allowed' });
+        }
+
+        if (!req.file || !req.file.fieldname === 'groupIcon') {
+            return res.status(400).json({ error: 'Did not receive group icon' });
+        }
+        
+        group.groupIcon = req.file.filename;
+        await group.save();
+        res.status(200).json( group );
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 router.delete('/:groupId', verifyToken, async (req, res) => {
     try {
         const userId = req.userId;
@@ -260,8 +301,49 @@ router.delete('/:groupId', verifyToken, async (req, res) => {
             return res.status(403).json({ error: 'Not allowed' });
         }
 
+        // also remove group icon from storage
+        storageHelpers.removeFileFromUploads(group.groupIcon);
+
         await Group.findByIdAndDelete(groupId);
         res.status(200).json({ message: 'Group deleted successfully' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// deleting current group pic
+router.delete('/:groupId/pic', verifyToken, async (req, res) => {
+    try {
+        const userId = req.userId;
+        if (!userId) {
+            return res.status(403).json({ error: 'Unauthorized' });
+        }
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        const groupId = req.params.groupId;
+        if (!groupId) {
+            return res.status(400).json({ error: 'Group ID is required' });
+        }
+        const group = await Group.findById(groupId);
+        if (!group) {
+            return res.status(404).json({ error: 'Group not found' });
+        }
+        
+        // user needs to be owner to delete group
+        const hasPermission = group.members.some(member => member.member.equals(userId) && member.permission === 3);
+        if (!hasPermission) {
+            return res.status(403).json({ error: 'Not allowed' });
+        }
+        
+        // also remove group icon from storage
+        removeFileFromUploads(group.groupIcon);
+        group.groupIcon = undefined;
+
+        await group.save();
+        res.status(200).json( group );
     } catch (err) {
         res.status(500).json({ error: err.message });
     }

@@ -26,9 +26,7 @@ export const AuthProvider = ({ children }) => {
                 username, password
             }, {
                 validateStatus: status => status < 500, // throw error if status is at least 500
-            }); 
-
-            console.log(res);
+            });
 
             if (res.status >= 400 ) {
                 const errorMessage = res.data.error;
@@ -66,7 +64,7 @@ export const AuthProvider = ({ children }) => {
                     validateStatus: status => status < 500, // throw error if status is at least 500);
                 });
 
-                if (res.status >= 400 ) {
+                if (res.status >= 400) {
                     const errorMessage = res.data.error;
                     console.log(errorMessage);
                     Alert.alert('Error', errorMessage);
@@ -74,7 +72,6 @@ export const AuthProvider = ({ children }) => {
                 }
                 
                 if (res.status === 200) {
-                    console.log(res.data.token);
                     setAccessToken(res.data.token);
                     return true;
                 }

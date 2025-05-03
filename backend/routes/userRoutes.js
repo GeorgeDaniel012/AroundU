@@ -5,6 +5,8 @@ const UserProfile = require('../models/UserProfile');
 const verifyToken = require('../middlewares/authMiddleware');
 const bcrypt = require('bcrypt');
 const Group = require('../models/Group');
+const { upload } = require('../middlewares/multerStorage');
+const { removeFileFromUploads } = require('../utils/storageHelpers');
 
 const router = express.Router();
 
@@ -78,6 +80,31 @@ router.put('/update', verifyToken, async (req, res) => {
     }
 });
 
+// route for setting/uploading profile picture
+router.put('/update/pic', verifyToken, upload.single('userIcon'), async (req, res) => {
+    try {
+        const userId = req.userId;
+        if (!userId) {
+            return res.status(403).json({ error: 'Unauthorized' });
+        }
+
+        const userProfile = await UserProfile.findOne({ userId });
+        if (!userProfile) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        if (!req.file || !req.file.fieldname === 'userIcon') {
+            return res.status(400).json({ error: 'Did not receive user icon' });
+        }
+        
+        userProfile.userIcon = req.file.filename;
+        await userProfile.save();
+        res.status(200).json( userProfile );
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 // code below is for "hard" deletion i.e. actually removing user from db
 /*
 router.delete('/delete', verifyToken, async (req, res) => {
@@ -124,7 +151,7 @@ router.delete('/delete', verifyToken, async (req, res) => {
             return res.status(403).json({ error: 'Incorrect password' });
         }
 
-        const userProfile = await UserProfile.findOneAndDelete({ userId });
+        const userProfile = await UserProfile.findOne({ userId });
         if (!userProfile) {
             return res.status(404).json({ error: 'User not found' });
         }
@@ -133,15 +160,46 @@ router.delete('/delete', verifyToken, async (req, res) => {
         user.isDeleted = true;
         // user info is made anonymous
         user.username = `DeletedUser${userId}`;
-        user.password = '';
+        user.password = ' ';
         user.email = `deleteduser${userId}@aroundu.com`;
 
         // hopefully these changes being one way doesn't break anything!
         //user.groups = [];
         //user.friends = [];
+
+        // also remove user icon from storage
+        removeFileFromUploads(userProfile.userIcon);
+
+        userProfile.displayName = 'Deleted User';
+        userProfile.bio = undefined;
+        userProfile.userIcon = undefined;
         
         await user.save();
+        await userProfile.save();
         res.status(200).json({ message: 'User deleted successfully' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// deleting current profile pic
+router.delete('/delete/pic', verifyToken, async (req, res) => {
+    try {
+        const userId = req.userId;
+        if (!userId) {
+            return res.status(403).json({ error: 'Unauthorized' });
+        }
+
+        const userProfile = await UserProfile.findOne({ userId });
+        if (!userProfile) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+        
+        removeFileFromUploads(userProfile.userIcon);
+        userProfile.userIcon = undefined;
+
+        await userProfile.save();
+        res.status(200).json( userProfile );
     } catch (err) {
         res.status(500).json({ error: err.message });
     }

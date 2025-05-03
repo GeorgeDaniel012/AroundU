@@ -8,7 +8,7 @@ import HomeScreen from "../screens/HomeScreen";
 import DiscoverScreen from "../screens/DiscoverScreen";
 import GroupsScreen from "../screens/GroupsScreen";
 import SettingsScreen from "../screens/SettingsScreen";
-import { Dimensions } from "react-native";
+import { scaleSize } from "../utils/helpers";
 
 const Tabs = () => {
     return (
@@ -34,9 +34,8 @@ const Tabs = () => {
                 },
                 tabBarActiveTintColor: "tomato",
                 tabBarInactiveTintColor: "gray",
-                //tabBarIconStyle: { fontSize: 48, height: 48 },
-                tabBarLabelStyle: { fontSize: 20 },
-                tabBarStyle: { height:80, paddingTop: 10, paddingBottom: 10 }//{ height: 2 * Dimensions.get('screen').height / 375 }
+                tabBarLabelStyle: { fontSize: scaleSize(16) },
+                tabBarStyle: { height: scaleSize(60), paddingTop: scaleSize(4), paddingBottom: scaleSize(4) } // base height = 80 (scale(73))
             })}
         >
             <Tab.Screen name="Home" component={HomeScreen} />
