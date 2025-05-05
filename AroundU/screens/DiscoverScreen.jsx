@@ -7,6 +7,7 @@ import axiosInstance from '../utils/axiosInstance';
 import Icon from "react-native-vector-icons/FontAwesome5";
 import { distanceBetweenPoints, scaleSize, themeList } from '../utils/helpers';
 import { CONNECTION } from '../config/config';
+import globalStyles from '../styles/globalStyles';
 
 const MarkerIcon = (props) => {
     const { group } = props;
@@ -36,7 +37,7 @@ const MarkerIcon = (props) => {
                 imageError ?
                 <Icon
                     name={getIconForTheme(group.theme)}
-                    size={32}
+                    size={28}
                     color="black"
                 /> :
                 <Image
@@ -50,6 +51,27 @@ const MarkerIcon = (props) => {
                 />
             }
         </View>
+    );
+}
+
+const ThemeComponent = (props) => {
+    const { themeName, iconName, themeFilter, handleSetTheme } = props;
+
+    return (
+        <>
+            {
+                themeFilter.includes(themeName) ?
+                <TouchableOpacity style={globalStyles.selectedTheme} onPress={handleSetTheme}>
+                    <Text style={globalStyles.selectedThemeText}>{themeName}</Text>
+                    <Icon name={iconName} size={scaleSize(21)} color={'white'} style={{marginLeft: 10}}/>
+                </TouchableOpacity> :
+
+                <TouchableOpacity style={globalStyles.unselectedTheme} onPress={handleSetTheme}>
+                    <Text style={globalStyles.unselectedThemeText}>{themeName}</Text>
+                    <Icon name={iconName} size={scaleSize(21)} color={'black'} style={{marginLeft: 10}}/>
+                </TouchableOpacity>
+            }
+        </>
     );
 }
 
@@ -87,6 +109,13 @@ const FilterModal = (props) => {
         },
     ];
 
+    const handleSetTheme = (filter) => {
+        const updatedFilter = themeFilter.includes(filter)
+            ? themeFilter.filter(status => status !== filter)
+            : [...themeFilter, filter];
+        setThemeFilter(updatedFilter);
+    }
+
     return (
         <Modal
             visible={isVisible}
@@ -96,61 +125,49 @@ const FilterModal = (props) => {
         >
             <TouchableWithoutFeedback>
                 <View style={styles.modalContent}>
-                    <Text>Filter by theme:</Text>
+                    <Text style={styles.bigText}>Filter by theme:</Text>
                     <FlatList
+                        numColumns={2}
                         data={themeList}
                         keyExtractor={(item) => item.id}
                         renderItem={({ item }) => (
-                            <View style={{flex: 1, flexDirection: 'row', gap: 5, justifyContent: 'center', alignItems: 'center'}}>
-                                {/* <Checkbox
-                                    status={themeFilter.includes(item.filterName) ? 'checked' : 'unchecked'}
-                                    onPress={() => {
-                                        const updatedFilter = themeFilter.includes(item.filterName)
-                                            ? themeFilter.filter(status => status !== item.filterName)
-                                            : [...themeFilter, item.filterName];
-                                        setThemeFilter(updatedFilter);
-                                    }}
-                                />
-                                <Text style={styles.modalItem}>{item.filterName}</Text> */}
-                                <TouchableOpacity
-                                    style={
-                                        themeFilter.includes(item.filterName) ?
-                                        { backgroundColor: 'green' } :
-                                        { backgroundColor: 'red' }
-                                    }
-                                    onPress={() => {
-                                        const updatedFilter = themeFilter.includes(item.filterName)
-                                            ? themeFilter.filter(status => status !== item.filterName)
-                                            : [...themeFilter, item.filterName];
-                                        setThemeFilter(updatedFilter);
-                                    }}
-                                >
-                                    <Text style={styles.modalItem}>{item.filterName}</Text>
-                                </TouchableOpacity>
+                            <View style={{flexDirection: 'row', gap: 5, justifyContent: 'center', alignItems: 'center'}}>
+                                <ThemeComponent themeName={item.filterName} iconName={item.iconName} themeFilter={themeFilter}
+                                    handleSetTheme={() => handleSetTheme(item.filterName)}/>
                             </View>
                         )}
+                        style={{ flexGrow: 0, marginVertical: 10 }}
                     />
 
-                    <Text>Maximum distance:</Text>
+                    <Text style={styles.bigText}>Maximum distance:</Text>
                     <FlatList
+                        numColumns={3}
                         data={radiusSet}
                         keyExtractor={(item) => item.id}
                         renderItem={({ item }) => (
-                            <View style={{flex: 1, flexDirection: 'row', gap: 5, justifyContent: 'center', alignItems: 'center'}}>
-                                <TouchableOpacity onPress={() => setRadius(item.radius * 1000)}>
-                                    <Text style={styles.modalItem}>{item.radius} {radius === item.radius * 1000 && '✔️'}</Text>
-                                </TouchableOpacity>
+                            <View style={{flexDirection: 'row', gap: 5, justifyContent: 'center', alignItems: 'center'}}>
+                                {
+                                    radius === item.radius * 1000 ?
+                                    <TouchableOpacity style={globalStyles.selectedTheme} onPress={() => setRadius(item.radius * 1000)}>
+                                        <Text style={{...globalStyles.selectedThemeText}}>{item.radius}km</Text>
+                                    </TouchableOpacity> :
+                                    <TouchableOpacity style={globalStyles.unselectedTheme} onPress={() => setRadius(item.radius * 1000)}>
+                                        <Text style={{...globalStyles.unselectedThemeText}}>{item.radius}km</Text>
+                                    </TouchableOpacity>
+                                }
                             </View>
                         )}
+                        style={{ flexGrow: 0, marginVertical: 10 }}
                     />
-                    <Button title="Apply" onPress={closeModal}/>
+                    <TouchableOpacity style={{...globalStyles.buttons}} onPress={closeModal}>
+                        <Text style={{...globalStyles.buttonText, marginRight: 0, textAlign: 'center'}}>Apply</Text>
+                    </TouchableOpacity>
                 </View>
             </TouchableWithoutFeedback>
         </Modal>
     )
 }
 
-// @refresh reset
 const DiscoverScreen = ({ navigation }) => {
     const [locationGranted, setLocationGranted] = useState(null); // for location permission
     const [currentLocation, setCurrentLocation] = useState({
@@ -335,11 +352,12 @@ const DiscoverScreen = ({ navigation }) => {
                         return (
                             <Marker
                                 key={index}
+                                anchor={{ x: 0.5, y: 0.5 }}
                                 coordinate={{
                                     longitude: marker.location.coordinates[0],
                                     latitude: marker.location.coordinates[1],
                                 }}
-                                title={marker.groupName}
+                                //title={marker.groupName}
                                 pinColor='#FFFFFF'
                                 onPress={() => handlePressOnGroup(marker)}
                                 tracksViewChanges={false}
@@ -354,8 +372,8 @@ const DiscoverScreen = ({ navigation }) => {
                 }
                 {   // current location circle
                     locationGranted &&
-                    <Marker coordinate={currentLocation} tracksViewChanges={false}>
-                        <Icon name="dot-circle" size={scaleSize(32)} color="blue"/>
+                    <Marker anchor={{ x: 0.5, y: 0.5 }} coordinate={currentLocation} tracksViewChanges={false}>
+                        <Icon name="dot-circle" size={30} color="blue"/>
                     </Marker>
                 }
                 
@@ -447,11 +465,17 @@ const styles = StyleSheet.create({
         //backgroundColor: 'rgba(0, 0, 0, 0.5)',
     },
     modalContent: {
+        flex: 1,
         //width: 300,
         backgroundColor: 'rgba(255, 255, 255, 1)',
         borderRadius: 10,
         padding: 20,
         alignItems: 'center',
+    },
+    bigText: {
+        color: 'black',
+        fontSize: scaleSize(20),
+        marginVertical: 10
     },
 });
 

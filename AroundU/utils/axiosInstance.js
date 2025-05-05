@@ -5,18 +5,29 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 const axiosInstance = axios.create({
     baseURL: `${CONNECTION}`,
     withCredentials: true,
-    //timeout: 2000
+    // timeout: 2000
 });
+
+// axiosInstance.interceptors.request.use(
+//     async (req) => {
+//         console.log('[Axios Interceptor] Request:', req);
+//         return req;
+//     },
+//     async (err) => {
+//         console.log('[Axios Interceptor] Request Error:', err);
+//         return err;
+//     },
+// );
 
 // in case the user is unauthorized to perform the request (code 401)
 // the app tries to refresh the token and tries the request again
 axiosInstance.interceptors.response.use(
     async (res) => {
-        console.log('[Axios Interceptor] Response:', res);
+        // console.log('[Axios Interceptor] Response:', res);
         return res;
     },
     async (err) => {
-        console.error('[Axios Interceptor] Error:', err);
+        console.error('[Axios Interceptor] Response Error:', err);
         if (err.response?.status === 401) {
             try {
                 const refreshToken = await AsyncStorage.getItem('refreshToken');

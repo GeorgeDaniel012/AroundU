@@ -22,7 +22,8 @@ function App() {
                     <Stack.Screen name="MainBottomTabs" component={Tabs} options={{ headerShown: false }}/>
                     <Stack.Screen name="ProfileScreen" component={ProfileScreen} options={{ headerShown: false }}/>
                     <Stack.Screen name="GroupInfo" component={GroupInfo} options={{ headerShown: false }}/>
-                    <Stack.Screen name="CreateGroup" component={CreateGroupScreen} options={{ title: 'Create Group' }} />
+                    <Stack.Screen name="CreateGroup" component={CreateGroupScreen} options={{ headerShown: false }}/>
+                    {/* options={{ title: 'Create Group' }} /> */}
                 </Stack.Navigator>
             </NavigationContainer>
         </AuthProvider>

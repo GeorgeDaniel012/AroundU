@@ -23,8 +23,6 @@ const GroupInfo = (props) => {
             <Text>{everyoneCanJoin}</Text>
             <Text>{description}</Text>
             <Text>{location.coordinates}</Text>
-            {/* <Text>{members}</Text>
-            <Text>{tags}</Text> */}
             <Text>{theme}</Text>
             <Text>{_id}</Text>
             <Button

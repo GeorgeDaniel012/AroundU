@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from "react";
+import React, { useContext, useEffect, useRef, useState } from "react";
 import { View, Text, StyleSheet, TextInput, FlatList, TouchableOpacity, ScrollView, Alert, Button, Modal, TouchableWithoutFeedback, Dimensions, Pressable } from "react-native";
 import Icon from "react-native-vector-icons/FontAwesome5";
 import { scaleSize, themeList } from "../utils/helpers";
@@ -6,6 +6,8 @@ import { Checkbox } from "react-native-paper";
 import MapView, { Callout, Marker } from 'react-native-maps';
 import axiosInstance from "../utils/axiosInstance";
 import { AuthContext } from "../contexts/AuthContext";
+import BackButton from "../components/BackButton";
+import globalStyles from "../styles/globalStyles";
 
 const MapModal = (props) => {
     const { closeModal, isVisible, markerLocation, setMarkerLocation } = props;
@@ -18,14 +20,25 @@ const MapModal = (props) => {
     const [latitudeText, setLatitudeText] = useState('');
     const [longitudeText, setLongitudeText] = useState('');
 
+    const markerRef = useRef(null);
 
     const onRegionChange = (region) => {
         setRegion(region);
     }
 
+    // for outputting coordinates to e.g. 6 decimals floats
+    const truncateFloat = (num, pow) => {
+        const powerOf10 = Math.pow(10, pow);
+        return Math.trunc(num * powerOf10) / powerOf10;
+    }
+
+    // this DOES NOT work properly on markers right now
+    // according to a random person on github issues
+    // BUT the event does fire on the mapview
+    // and it still returns the new coordinate
+    // so for now this will stay on the mapview
     const onDragEnd = (e) => {
-        console.log('lcoation', e.nativeEvent.coordinate);
-        //setMarkerLocation(location);
+        setMarkerLocation(e.nativeEvent.coordinate);
     }
 
     const handleSetMarker = () => {
@@ -79,13 +92,12 @@ const MapModal = (props) => {
                     }}
                     onRegionChangeComplete={onRegionChange}
                     toolbarEnabled={false}
+                    onMarkerDragEnd={onDragEnd}
                 >
                     <Marker
+                        ref={markerRef}
                         coordinate={markerLocation}
                         draggable
-                        onDragStart={() => {console.log("c2f")}}
-                        onDragEnd={() => {console.log("cf")}}
-                        onDrag={() => console.log('ddddddad')}
                     />
                 </MapView>
 
@@ -94,7 +106,7 @@ const MapModal = (props) => {
                         style={{...styles.input, width: 260, marginRight: 10}}
                         onChangeText={setLatitudeText}
                         value={markerLocation.latitude}
-                        placeholder="Latitude"
+                        placeholder={`Latitude: ${truncateFloat(markerLocation.latitude, 6)}`}
                         placeholderTextColor="grey"
                         keyboardType="numeric"
                     />
@@ -102,18 +114,21 @@ const MapModal = (props) => {
                         style={{...styles.input, width: 260, marginRight: 10}}
                         onChangeText={setLongitudeText}
                         value={markerLocation.longitude}
-                        placeholder="Longitude"
+                        placeholder={`Longitude: ${truncateFloat(markerLocation.longitude, 6)}`}
                         placeholderTextColor="grey"
                         keyboardType="numeric"
                     />
-                    <TouchableOpacity style={styles.buttons} onPress={handleSetMarker}>
-                        <Text style={{...styles.buttonText, marginRight: 0}}>Set Marker</Text>
-                    </TouchableOpacity>
+                    <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center' }}>
+                        <TouchableOpacity style={globalStyles.buttons} onPress={handleSetMarker}>
+                            <Text style={{...globalStyles.buttonText, marginRight: 0}}>Set Marker</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity style={{...globalStyles.buttons}} onPress={closeModal}>
+                            <Text style={{...globalStyles.buttonText, marginRight: 0, textAlign: 'center'}}>Save Marker</Text>
+                        </TouchableOpacity>
+                    </View>
                 </View>
                 
-                <TouchableOpacity style={{...styles.buttons, position: 'absolute', right: 5, top: 5}} onPress={closeModal}>
-                    <Text style={{...styles.buttonText, marginRight: 0, textAlign: 'center'}}>Apply</Text>
-                </TouchableOpacity>
+                
             </View>
         </Modal>
     );
@@ -168,22 +183,11 @@ const TagModal = (props) => {
                         </Pressable>
                     </ScrollView>
                 </View>
-                <TouchableOpacity style={styles.buttons} onPress={closeModal}>
-                    <Text style={{...styles.buttonText, marginRight: 0}}>Apply</Text>
+                <TouchableOpacity style={globalStyles.buttons} onPress={closeModal}>
+                    <Text style={{...globalStyles.buttonText, marginRight: 0}}>Save Tags</Text>
                 </TouchableOpacity>
             </View>
         </Modal>
-    );
-}
-
-const TagComponent = (props) => {
-    const { tagName, removeTag } = props;
-
-    return (
-        <TouchableOpacity style={styles.tag} onPress={removeTag}>
-            <Text style={styles.selectedThemeText}>{tagName}</Text>
-            <Icon name="minus" size={scaleSize(20)} color="white"/>
-        </TouchableOpacity>
     );
 }
 
@@ -194,17 +198,28 @@ const ThemeComponent = (props) => {
         <>
             {
                 theme === themeName ?
-                <TouchableOpacity style={styles.selectedTheme} onPress={handleSetTheme}>
-                    <Text style={styles.selectedThemeText}>{themeName}</Text>
-                    <Icon name={iconName} size={scaleSize(24)} color={'white'}/>
+                <TouchableOpacity style={globalStyles.selectedTheme} onPress={handleSetTheme}>
+                    <Text style={{...globalStyles.selectedThemeText, marginRight: scaleSize(16)}}>{themeName}</Text>
+                    <Icon name={iconName} size={scaleSize(21)} color={'white'}/>
                 </TouchableOpacity> :
 
-                <TouchableOpacity style={styles.unselectedTheme} onPress={handleSetTheme}>
-                    <Text style={styles.unselectedThemeText}>{themeName}</Text>
-                    <Icon name={iconName} size={scaleSize(24)} color={'black'}/>
+                <TouchableOpacity style={globalStyles.unselectedTheme} onPress={handleSetTheme}>
+                    <Text style={{...globalStyles.unselectedThemeText, marginRight: scaleSize(16)}}>{themeName}</Text>
+                    <Icon name={iconName} size={scaleSize(21)} color={'black'}/>
                 </TouchableOpacity>
             }
         </>
+    );
+}
+
+const TagComponent = (props) => {
+    const { tagName, removeTag } = props;
+
+    return (
+        <TouchableOpacity style={styles.tag} onPress={removeTag}>
+            <Text style={{...globalStyles.selectedThemeText, marginRight: scaleSize(16)}}>{tagName}</Text>
+            <Icon name="minus" size={scaleSize(20)} color="white"/>
+        </TouchableOpacity>
     );
 }
 
@@ -286,14 +301,14 @@ const CreateGroupScreen = ({ navigation }) => {
     return (
         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
             <TextInput
-                style={styles.input}
+                style={globalStyles.input}
                 onChangeText={setGroupName}
                 value={groupName}
                 placeholder="Group name (required)"
                 placeholderTextColor="grey"
             />
             <TextInput
-                style={{...styles.input, height: scaleSize(70)}}
+                style={{...globalStyles.input, height: scaleSize(70)}}
                 onChangeText={setDescription}
                 value={description}
                 placeholder="Description (required)"
@@ -325,11 +340,11 @@ const CreateGroupScreen = ({ navigation }) => {
                     onPress={() => setRequestToJoin(!requestToJoin)}
                     color="black"
                 />
-                <Text style={{ fontSize: scaleSize(20) }}>New members need to request access</Text>
+                <Text style={{ fontSize: scaleSize(18) }}>New members need to request access</Text>
             </View>
 
-            <TouchableOpacity style={styles.buttons} onPress={() => setMapModalVisible(true)}>
-                <Text style={styles.buttonText}>Set Location</Text>
+            <TouchableOpacity style={globalStyles.buttons} onPress={() => setMapModalVisible(true)}>
+                <Text style={{...globalStyles.buttonText, marginRight: scaleSize(18)}}>Set Location</Text>
                 <Icon name="map-marker" size={scaleSize(30)} color="white"/>
             </TouchableOpacity>
             <MapModal
@@ -339,8 +354,8 @@ const CreateGroupScreen = ({ navigation }) => {
                 setMarkerLocation={setLocation}
             />
 
-            <TouchableOpacity style={styles.buttons} onPress={() => setTagModalVisible(true)}>
-                <Text style={styles.buttonText}>Set Tags</Text>
+            <TouchableOpacity style={globalStyles.buttons} onPress={() => setTagModalVisible(true)}>
+                <Text style={{...globalStyles.buttonText, marginRight: scaleSize(18)}}>Set Tags</Text>
                 <Icon name="tag" size={scaleSize(30)} color="white"/>
             </TouchableOpacity>
             <TagModal
@@ -353,9 +368,11 @@ const CreateGroupScreen = ({ navigation }) => {
                 setTagText={setTagText}
             />
 
-            <TouchableOpacity style={styles.buttons} onPress={handleCreateGroup}>
-                <Text style={{...styles.buttonText, marginRight: 0}}>Create Group</Text>
+            <TouchableOpacity style={globalStyles.buttons} onPress={handleCreateGroup}>
+                <Text style={{...globalStyles.buttonText, fontSize: scaleSize(22), marginRight: 0}}>Create Group</Text>
             </TouchableOpacity>
+
+            <BackButton navigation={navigation}/>
         </View>
     );
 }
@@ -363,30 +380,6 @@ const CreateGroupScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-    },
-    input: {
-        borderWidth: 1,
-        padding: 10,
-        width: 300,
-        margin: scaleSize(12),
-        height: scaleSize(44),
-        borderRadius: 10,
-        fontSize: scaleSize(16),
-        color: 'black'
-    },
-    buttons: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        padding: 10,
-        backgroundColor: 'black',
-        borderWidth: 1,
-        borderRadius: 10,
-        margin: scaleSize(12),
-    },
-    buttonText: {
-        color: "white",
-        fontSize: scaleSize(20),
-        marginRight: scaleSize(18),
     },
     tag: {
         justifyContent: 'center', 
@@ -399,40 +392,6 @@ const styles = StyleSheet.create({
         maxWidth: 300,
         flexDirection: 'row',
         margin: 5
-    },
-    selectedTheme: {
-        justifyContent: 'center', 
-        alignItems: 'center', 
-        backgroundColor: 'black', 
-        padding: 10,
-        borderWidth: 1, 
-        borderRadius: 10,
-        maxHeight: 50,
-        maxWidth: 300,
-        flexDirection: 'row',
-        margin: 5
-    },
-    selectedThemeText: { 
-        color: 'white', 
-        fontSize: scaleSize(18), 
-        marginRight: scaleSize(18),
-    },
-    unselectedTheme: {
-        justifyContent: 'center', 
-        alignItems: 'center', 
-        backgroundColor: 'white', 
-        padding: 10,
-        borderWidth: 1, 
-        borderRadius: 10,
-        maxHeight: 50,
-        maxWidth: 300,
-        flexDirection: 'row',
-        margin: 5
-    },
-    unselectedThemeText: { 
-        color: 'black', 
-        fontSize: scaleSize(18), 
-        marginRight: 20 
     },
     checkbox: {
         flexDirection: 'row',
@@ -450,10 +409,11 @@ const styles = StyleSheet.create({
     },
     locationInputView: {
         position: 'absolute',
+        paddingTop: 10,
         bottom: 0,
         width: '100%',
         //left: 10,
-        backgroundColor: 'rgb(255, 255, 255)',
+        backgroundColor: 'white',
         flex: 1,
         alignItems: 'center',
         justifyContent: 'center',

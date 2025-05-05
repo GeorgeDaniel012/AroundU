@@ -13,7 +13,10 @@ const fileRoutes = require('./routes/fileRoutes');
 
 const app = express();
 
-app.use(cors({origin: true}));
+app.use(cors({
+    origin: 'http://192.168.214.53:8081',
+    credentials: true
+}));
 app.use(cookieParser());
 app.use(express.json());
 
@@ -30,10 +33,10 @@ app.use('/user', userRoutes);
 app.use('/group', groupRoutes);
 app.use('/group', groupUserManagementRoutes);
 app.use('/file', fileRoutes);
-app.use('/static' ,express.static('uploads'));
+app.use('/static', express.static('uploads'));
 
 const PORT = process.env.PORT || 3000;
 
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
     console.log(`Server is running on port ${PORT}`);
 });

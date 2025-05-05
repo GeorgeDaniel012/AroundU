@@ -1,7 +1,8 @@
 import { useEffect, useContext } from "react";
-import { View, Text, Alert } from "react-native";
+import { View, Text, Alert, Image, StyleSheet } from "react-native";
 import { resetNavigationStack } from "../utils/helpers";
 import { AuthContext } from "../contexts/AuthContext";
+import { scaleSize } from "../utils/helpers";
 
 const SplashScreen = ({ navigation }) => {
     const {accessToken, login, logout, refresh} = useContext(AuthContext);
@@ -27,9 +28,16 @@ const SplashScreen = ({ navigation }) => {
 
     return (
         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-            <Text>Splash Screen</Text>
+            <Image style={styles.logo} source={require('../assets/images/AroundU-Icon.png')}/>
         </View>
     )
 }
+
+const styles = StyleSheet.create({
+    logo: {
+        height: scaleSize(360),
+        width: scaleSize(360),
+    },
+});
 
 export default SplashScreen;
