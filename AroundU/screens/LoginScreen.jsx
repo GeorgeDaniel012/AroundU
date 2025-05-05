@@ -4,7 +4,7 @@ import { AuthContext } from "../contexts/AuthContext";
 import axiosInstance from "../utils/axiosInstance";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation, CommonActions } from "@react-navigation/native";
-import { resetNavigationStack, scaleSize } from "../utils/helpers";
+import { passwordStrengthRegexp, resetNavigationStack, scaleSize } from "../utils/helpers";
 import globalStyles from "../styles/globalStyles";
 
 const LoginContainer = ({ usernameField, passwordField, setUsernameField, setPasswordField,
@@ -95,6 +95,16 @@ const LoginScreen = ({ navigation }) => {
             return;
         }
 
+        if (!passwordField.match(passwordStrengthRegexp)) {
+            Alert.alert('Error', 'Password is not secure enough.\n' +
+                'Make sure your password satisfies the following conditions:\n' +
+                '- is at least 8 characters long;\n' +
+                '- has at least one lowercase and one uppercase letter;\n' +
+                '- has at least one digit and one special character (#?!@$%^&*-).\n'
+            );
+            return;
+        }
+
         try {
             const response = await axiosInstance.post('/register', {
                 username: usernameField,
@@ -103,8 +113,6 @@ const LoginScreen = ({ navigation }) => {
             }, {
                 validateStatus: status => status < 500, // throw error if status is at least 500
             }); 
-
-            console.log('response', response);
 
             if (response.status >= 400 ) {
                 const errorMessage = response.data.error;

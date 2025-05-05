@@ -105,6 +105,39 @@ router.put('/update/pic', verifyToken, upload.single('userIcon'), async (req, re
     }
 });
 
+router.put('/update/changePassword', verifyToken, async (req, res) => {
+    try {
+        // an authenticated user can only update their own password
+        const userId = req.userId;
+        if (!userId) {
+            return res.status(403).json({ error: 'Unauthorized' });
+        }
+
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        const { password, newPassword } = req.body;
+
+        if (!password || !newPassword) {
+            return res.status(400).json({ error: 'Old and new password are required' });
+        }
+
+        const isPasswordMatch = await bcrypt.compare(password, user.password);
+        if (!isPasswordMatch) {
+            return res.status(400).json({ error: 'Invalid credentials' });
+        }
+
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
+        user.password = hashedPassword;
+        await user.save();
+        res.status(200).json({ message: 'Password changed successfully' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 // code below is for "hard" deletion i.e. actually removing user from db
 /*
 router.delete('/delete', verifyToken, async (req, res) => {

@@ -100,3 +100,5 @@ export const scaleSize = (size) => {
     const baseWidth = 375; // baseline width
     return size * (Dimensions.get('screen').width / baseWidth);
 };
+
+export const passwordStrengthRegexp = new RegExp("^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*-]).{8,}$");

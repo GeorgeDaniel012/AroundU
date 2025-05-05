@@ -127,8 +127,6 @@ const MapModal = (props) => {
                         </TouchableOpacity>
                     </View>
                 </View>
-                
-                
             </View>
         </Modal>
     );
@@ -146,7 +144,7 @@ const TagModal = (props) => {
             <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
                 <View style={{ flexDirection: 'row', justifyContent: 'flex-end', alignItems: 'center', maxHeight: 50, width: 300, margin: 15 }}>
                     <TextInput
-                        style={{...styles.input, width: 260, marginRight: 10}}
+                        style={{...globalStyles.input, width: 260, marginRight: 10}}
                         onChangeText={setTagText}
                         value={tagText}
                         placeholder="Tag"
@@ -277,7 +275,7 @@ const CreateGroupScreen = ({ navigation }) => {
                 headers: {
                     'Authorization': `Bearer ${accessToken}`
                 },
-                validateStatus: status => status < 600, // throw error if status is at least 500
+                validateStatus: status => status < 500, // throw error if status is at least 500
             });
 
             console.log(res);
