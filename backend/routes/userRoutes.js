@@ -169,7 +169,7 @@ router.delete('/delete', verifyToken, async (req, res) => {
 
 // code below is for "soft" deletion i.e. marking deleted users as deleted,
 // making their info anonymous but not removing them from db
-router.delete('/delete', verifyToken, async (req, res) => {
+router.put('/delete', verifyToken, async (req, res) => {
     try {
         // an authenticated user can only delete their own account
         const userId = req.userId;

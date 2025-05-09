@@ -39,7 +39,7 @@ const ChangePasswordModal = (props) => {
                 validateStatus: status => status < 500, // throw error if status is at least 500
             });
 
-            if (res.status >= 400 ) {
+            if (res.status >= 400) {
                 const errorMessage = res.data.error;
                 console.log(errorMessage);
                 Alert.alert('Error', errorMessage);
@@ -85,8 +85,70 @@ const ChangePasswordModal = (props) => {
     );
 }
 
+const DeleteAccountModal = (props) => {
+    const [passwordField, setPasswordField] = useState('');
+    const { closeModal, isVisible, } = props;
+    const { accessToken, logout } = useContext(AuthContext);
+
+    const handleDeleteAccount = async () => {
+        if (!passwordField) {
+            Alert.alert('Error', 'Please fill out password field');
+            return;
+        }
+        
+        try {
+            const res = await axiosInstance.put('/user/delete', {
+                password: passwordField,
+            }, {
+                headers: {
+                    'Authorization': `Bearer ${accessToken}`
+                },
+                validateStatus: status => status < 500, // throw error if status is at least 500
+            });
+
+            if (res.status >= 400) {
+                const errorMessage = res.data.error;
+                console.log(errorMessage);
+                Alert.alert('Error', errorMessage);
+            }
+            
+            if (res.status === 200) {
+                Alert.alert('Success', 'You have deleted your account.');
+                logout();
+                resetNavigationStack(navigation, 'LoginScreen');
+            }
+        } catch (err) {
+            console.error('Error deleting account:', err);
+        }
+    }
+
+    return (
+        <Modal
+            visible={isVisible}
+            onRequestClose={closeModal}
+            animationType='slide'
+        >
+            <BackButton onPress={closeModal}/>
+            <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
+                <TextInput
+                    style={globalStyles.input}
+                    value={passwordField}
+                    onChangeText={setPasswordField}
+                    placeholder="Current Password"
+                    placeholderTextColor="grey"
+                    secureTextEntry
+                />
+                <TouchableOpacity style={globalStyles.buttons} onPress={handleDeleteAccount}>
+                    <Text style={globalStyles.buttonText}>Delete Account</Text>
+                </TouchableOpacity>
+            </View>
+        </Modal>
+    );
+}
+
 const SettingsScreen = ({ navigation }) => {
-    const [isModalVisible, setIsModalVisible] = useState(false);
+    const [isChangePasswordModalVisible, setIsChangePasswordModalVisible] = useState(false);
+    const [isDeleteAccountModalVisible, setIsDeleteAccountModalVisible] = useState(false);
     const {logout} = useContext(AuthContext);
 
     const logoutCallback = async () => {
@@ -99,12 +161,21 @@ const SettingsScreen = ({ navigation }) => {
             <TouchableOpacity style={globalStyles.buttons} onPress={logoutCallback}>
                 <Text style={globalStyles.buttonText}>Logout</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={globalStyles.buttons} onPress={() => setIsModalVisible(true)}>
+
+            <TouchableOpacity style={globalStyles.buttons} onPress={() => setIsChangePasswordModalVisible(true)}>
                 <Text style={globalStyles.buttonText}>Change Password</Text>
             </TouchableOpacity>
             <ChangePasswordModal
-                isVisible={isModalVisible}
-                closeModal={() => setIsModalVisible(false)}
+                isVisible={isChangePasswordModalVisible}
+                closeModal={() => setIsChangePasswordModalVisible(false)}
+            />
+
+            <TouchableOpacity style={globalStyles.buttons} onPress={() => setIsDeleteAccountModalVisible(true)}>
+                <Text style={globalStyles.buttonText}>Delete Account</Text>
+            </TouchableOpacity>
+            <DeleteAccountModal
+                isVisible={isDeleteAccountModalVisible}
+                closeModal={() => setIsDeleteAccountModalVisible(false)}
             />
         </View>
     );

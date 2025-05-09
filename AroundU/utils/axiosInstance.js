@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { CONNECTION } from '../config/config';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { setAccessTokenExternal } from '../contexts/AuthContext';
 
 const axiosInstance = axios.create({
     baseURL: `${CONNECTION}`,
@@ -39,15 +40,15 @@ axiosInstance.interceptors.response.use(
                         validateStatus: status => status < 500, // throw error if status is at least 500);
                     });
 
-                    if (res.status >= 400 ) {
+                    if (res.status >= 400) {
                         const errorMessage = res.data.error;
                         console.log(errorMessage);
-                        Alert.alert('Error', errorMessage);
+                        // Alert.alert('Error', errorMessage);
                     }
                     
                     if (res.status === 200) {
-                        console.log(res.data.token);
-                        setAccessToken(res.data.token);
+                        // console.log(res.data.token);
+                        setAccessTokenExternal(res.data.token);
                     }
 
                     return axiosInstance(res);
