@@ -87,7 +87,7 @@ const ChangePasswordModal = (props) => {
 
 const DeleteAccountModal = (props) => {
     const [passwordField, setPasswordField] = useState('');
-    const { closeModal, isVisible, } = props;
+    const { closeModal, isVisible, navigation } = props;
     const { accessToken, logout } = useContext(AuthContext);
 
     const handleDeleteAccount = async () => {
@@ -176,6 +176,7 @@ const SettingsScreen = ({ navigation }) => {
             <DeleteAccountModal
                 isVisible={isDeleteAccountModalVisible}
                 closeModal={() => setIsDeleteAccountModalVisible(false)}
+                navigation={navigation}
             />
         </View>
     );

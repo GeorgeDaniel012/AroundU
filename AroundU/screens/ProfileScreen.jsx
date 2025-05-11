@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useState } from "react";
-import { View, Text, TouchableOpacity, Image, Dimensions } from "react-native";
+import { View, Text, TouchableOpacity, Image, Dimensions, ScrollView } from "react-native";
 import axiosInstance from "../utils/axiosInstance";
 import { AuthContext } from "../contexts/AuthContext";
 import { CONNECTION } from '../config/config';
@@ -29,11 +29,20 @@ const ProfileScreen = ({ navigation, ...props }) => {
                 },
             });
 
-            const user = await resUserProfile.data;
-            setUsername(user.username);
-            setDisplayName(user.displayName);
-            setBio(user?.bio);
-            setUserIconPath(user?.userIcon);
+            if (resUserProfile.status >= 400) {
+                const errorMessage = resUserProfile.data.error;
+                console.log(errorMessage);
+                Alert.alert('Error', errorMessage);
+            }
+
+            if (resUserProfile.status === 200) {
+                const user = await resUserProfile.data;
+                setUsername(user.username);
+                setDisplayName(user.displayName);
+                setBio(user?.bio);
+                setUserIconPath(user?.userIcon);
+                console.log(user?.userIcon)
+            }
             
             const resUserGroups = await axiosInstance.get(`/user/profile/groups/${userId}`, {
                 headers: {
@@ -42,8 +51,16 @@ const ProfileScreen = ({ navigation, ...props }) => {
                 },
             });
 
-            const groups = await resUserGroups.data;
-            setGroups(groups);
+            if (resUserGroups.status >= 400) {
+                const errorMessage = resUserGroups.data.error;
+                console.log(errorMessage);
+                Alert.alert('Error', errorMessage);
+            }
+
+            if (resUserGroups.status === 200) {
+                const groups = await resUserGroups.data;
+                setGroups(groups);
+            }
 
             setIsLoading(false);
         } catch (err) {
@@ -68,12 +85,12 @@ const ProfileScreen = ({ navigation, ...props }) => {
                         imageError ?
                         <Image
                             source={ require('../assets/images/missing_user_icon.png') }
-                            style={{ width: scaleSize(140), height: scaleSize(140), borderRadius: 60 }}
+                            style={{ width: scaleSize(140), height: scaleSize(140), borderRadius: 100 }}
                             resizeMode="contain"
                         /> :
                         <Image
-                            source={{ uri: `${CONNECTION}/static/${userIconPath}` }}
-                            style={{ width: scaleSize(140), height: scaleSize(140), borderRadius: 60 }}
+                            source={{ uri: `${CONNECTION}/static/${userIconPath}`, cache: 'reload' }}
+                            style={{ width: scaleSize(140), height: scaleSize(140), borderRadius: 100 }}
                             resizeMode="contain"
                             onError={({nativeEvent: {error}}) => {
                                 console.log("err", error);
@@ -82,10 +99,12 @@ const ProfileScreen = ({ navigation, ...props }) => {
                         />
                     }
                     </View>
-                    <View style={{ flex: 3, alignItems: 'center' }}>
-                        <Text style={globalStyles.nameText}>{displayName}</Text>
-                        <Text style={globalStyles.unselectedThemeText}>@{username}</Text>
-                        <Text style={globalStyles.unselectedThemeText}>{bio}</Text>
+                    <View style={{ flex: 3, alignItems: 'center', maxWidth: scaleSize(300) }}>
+                        <Text style={{...globalStyles.nameText, marginBottom: scaleSize(10)}}>{displayName}</Text>
+                        <Text style={{...globalStyles.unselectedThemeText, marginBottom: scaleSize(20)}}>@{username}</Text>
+                        <ScrollView>
+                            <Text style={globalStyles.unselectedThemeText}>{bio}</Text>
+                        </ScrollView>
                     </View>
                     <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
                         {
