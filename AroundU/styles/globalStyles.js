@@ -55,8 +55,13 @@ export default StyleSheet.create({
         margin: scaleSize(12),
     },
     buttonText: {
-        color: "white",
+        color: 'white',
         fontSize: scaleSize(20),
         //marginRight: scaleSize(18),
     },
+
+    nameText: {
+        color: 'black', 
+        fontSize: scaleSize(30),
+    }
 });

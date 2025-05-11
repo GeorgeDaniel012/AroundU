@@ -9,6 +9,7 @@ import { AuthProvider } from "./contexts/AuthContext";
 import SplashScreen from "./screens/SplashScreen";
 import GroupInfo from "./screens/GroupInfo";
 import CreateGroupScreen from "./screens/CreateGroupScreen";
+import EditProfile from "./screens/EditProfile";
 
 const Stack = createNativeStackNavigator();
 
@@ -23,6 +24,7 @@ function App() {
                     <Stack.Screen name="ProfileScreen" component={ProfileScreen} options={{ headerShown: false }}/>
                     <Stack.Screen name="GroupInfo" component={GroupInfo} options={{ headerShown: false }}/>
                     <Stack.Screen name="CreateGroup" component={CreateGroupScreen} options={{ headerShown: false }}/>
+                    <Stack.Screen name="EditProfile" component={EditProfile} options={{ headerShown: false }}/>
                     {/* options={{ title: 'Create Group' }} /> */}
                 </Stack.Navigator>
             </NavigationContainer>

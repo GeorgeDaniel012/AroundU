@@ -10,6 +10,51 @@ const { removeFileFromUploads } = require('../utils/storageHelpers');
 
 const router = express.Router();
 
+router.get('/profile', verifyToken, async (req, res) => {
+    try {
+        const userId = req.userId;
+        // this route is to get profile of currently logged in user
+        if (!userId) {
+            return res.status(400).json({ error: 'User ID is required' });
+        }
+
+        const user = await User.findOne({ _id: userId }).select('friends username');
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+        
+        const userProfile = await UserProfile.findOne({ userId: userId })
+            .select('displayName bio userIcon'); // only include wanted fields
+        if (!userProfile) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+        res.status(200).json({ ...userProfile._doc, friends: user.friends, username: user.username });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+router.get('/profile/groups', verifyToken, async (req, res) => {
+    try {
+        const userId = req.userId;
+        // this route is to get groups of currently logged in user
+        if (!userId) {
+            return res.status(400).json({ error: 'User ID is required' });
+        }
+
+        const user = await User.findById(userId)
+            .select('groups')
+            .populate('groups', 'groupName theme tags');
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+        
+        res.status(200).json( user.groups );
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 router.get('/profile/:userId', async (req, res) => {
     try {
         const userId = req.params.userId;
@@ -18,23 +63,23 @@ router.get('/profile/:userId', async (req, res) => {
             return res.status(400).json({ error: 'User ID is required' });
         }
 
-        const user = await User.findOne({ _id: userId }).select('friends');
+        const user = await User.findOne({ _id: userId }).select('friends username');
         if (!user) {
             return res.status(404).json({ error: 'User not found' });
         }
         
         const userProfile = await UserProfile.findOne({ userId: userId })
-            .select('displayName bio'); // only include wanted fields
+            .select('displayName bio userIcon'); // only include wanted fields
         if (!userProfile) {
             return res.status(404).json({ error: 'User not found' });
         }
-        res.status(200).json({ ...userProfile._doc, friends: user.friends });
+        res.status(200).json({ ...userProfile._doc, friends: user.friends, username: user.username });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
 });
 
-router.get('/profile/:userId/groups', async (req, res) => {
+router.get('/profile/groups/:userId', async (req, res) => {
     try {
         const userId = req.params.userId;
         // this route is public, so no need for token verification

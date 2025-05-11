@@ -6,7 +6,7 @@ const HomeScreen = ({ navigation }) => {
     return (
         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
             <Text>Home Screen</Text>
-            <Button title="Profile Screen" onPress={() => navigation.navigate("ProfileScreen")}/>
+            <Button title="Profile Screen" onPress={() => navigation.navigate("ProfileScreen", { userId: '' })}/>
         </View>
     );
 }
