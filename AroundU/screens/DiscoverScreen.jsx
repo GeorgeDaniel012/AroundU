@@ -5,20 +5,13 @@ import MapView, { Callout, Marker } from 'react-native-maps';
 import Geolocation from 'react-native-geolocation-service';
 import axiosInstance from '../utils/axiosInstance';
 import Icon from "react-native-vector-icons/FontAwesome5";
-import { distanceBetweenPoints, scaleSize, themeList } from '../utils/helpers';
+import { distanceBetweenPoints, scaleSize, themeList, getIconForTheme } from '../utils/helpers';
 import { CONNECTION } from '../config/config';
 import globalStyles from '../styles/globalStyles';
 
 const MarkerIcon = (props) => {
     const { group } = props;
     const [imageError, setImageError] = useState(false);
-
-    const getIconForTheme = (themeName) => {
-        const themeObj = themeList.find((theme) => theme.filterName === themeName);
-        // in case the theme is none of the predefined themes
-        // the icon used is the same one as the "other" icon
-        return themeObj ? themeObj.iconName : 'plus';
-    }
 
     return (
         <View style={{ flex: 1, flexDirection: 'row', justifyContent: 'center', alignItems: 'center' }}>
@@ -132,8 +125,12 @@ const FilterModal = (props) => {
                         keyExtractor={(item) => item.id}
                         renderItem={({ item }) => (
                             <View style={{flexDirection: 'row', gap: 5, justifyContent: 'center', alignItems: 'center'}}>
-                                <ThemeComponent themeName={item.filterName} iconName={item.iconName} themeFilter={themeFilter}
-                                    handleSetTheme={() => handleSetTheme(item.filterName)}/>
+                                <ThemeComponent
+                                    themeName={item.filterName}
+                                    iconName={item.iconName}
+                                    themeFilter={themeFilter}
+                                    handleSetTheme={() => handleSetTheme(item.filterName)}
+                                />
                             </View>
                         )}
                         style={{ flexGrow: 0, marginVertical: 10 }}

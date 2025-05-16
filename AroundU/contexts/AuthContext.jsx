@@ -18,12 +18,10 @@ export const AuthProvider = ({ children }) => {
         setAccessTokenExt = setAccessToken;
     }, []);
 
-    const getRefreshTokenCookie = (res) => {
-        const cookie = (res.headers['set-cookie'])
-            .find(cookie => cookie.includes('refreshToken'))
-            ?.match(new RegExp(`^refreshToken=(.+?);`))
-            ?.[1];
-        return cookie;
+    const getCookie = (res, cookieName) => {
+        var match = res.headers['set-cookie'][0]
+            .match(new RegExp("(^| )" + cookieName + "=([^;]+)"));
+        return match ? match[2] : "";
     }
 
     // this function actually returns a bool
@@ -37,6 +35,8 @@ export const AuthProvider = ({ children }) => {
                 validateStatus: status => status < 500, // throw error if status is at least 500
             });
 
+            console.log('res:', res);
+
             if (res.status >= 400 ) {
                 const errorMessage = res.data.error;
                 console.log(errorMessage);
@@ -45,10 +45,10 @@ export const AuthProvider = ({ children }) => {
             }
             
             if (res.status === 200) {
-                //console.log(res.data.token);
                 Alert.alert('Success', 'You are now logged in!');
-                setAccessToken(res.data.token);
-                await AsyncStorage.setItem('refreshToken', getRefreshTokenCookie(res));
+                console.log('cookie', getCookie(res, 'refreshToken'));
+                await AsyncStorage.setItem('refreshToken', getCookie(res, 'refreshToken'));
+                await AsyncStorage.setItem('currentUserId', getCookie(res, 'currentUserId'));
             }
             return true;
         } catch (err) {
@@ -60,6 +60,7 @@ export const AuthProvider = ({ children }) => {
     const logout = async () => {
         setAccessToken(null);
         AsyncStorage.removeItem('refreshToken');
+        AsyncStorage.removeItem('currentUserId');
     }
 
     const refresh = async () => {

@@ -96,6 +96,13 @@ export const themeList = [
     },
 ];
 
+export const getIconForTheme = (themeName) => {
+    const themeObj = themeList.find((theme) => theme.filterName === themeName);
+    // in case the theme is none of the predefined themes
+    // the icon used is the same one as the "other" icon
+    return themeObj ? themeObj.iconName : 'plus';
+}
+
 export const scaleSize = (size) => {
     const baseWidth = 375; // baseline width
     return size * (Dimensions.get('screen').width / baseWidth);

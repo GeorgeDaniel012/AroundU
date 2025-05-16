@@ -34,7 +34,18 @@ router.get('/:groupId/members', async (req, res) => {
         }
         const group = await Group.findById(groupId)
             .select('members')
-            .populate('members.member', 'username');
+            // getting username for each member
+            .populate({ 
+                path: 'members.member', 
+                select: 'username',
+                // and their userIcon through the userProfile virtual field
+                populate: {
+                    path: 'userProfile',
+                    select: '-userId -_id userIcon'
+                }
+            });
+            //.populate('members.member', 'username userProfile')
+            //.populate('userProfile', 'userIcon');
         if (!group) {
             return res.status(404).json({ error: 'Group not found' });
         }

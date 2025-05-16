@@ -12,7 +12,6 @@ export default StyleSheet.create({
         fontSize: scaleSize(16),
         color: 'black'
     },
-
     selectedTheme: {
         justifyContent: 'center', 
         alignItems: 'center', 
@@ -59,7 +58,6 @@ export default StyleSheet.create({
         fontSize: scaleSize(20),
         //marginRight: scaleSize(18),
     },
-
     nameText: {
         color: 'black', 
         fontSize: scaleSize(30),

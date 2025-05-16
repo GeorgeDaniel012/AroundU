@@ -74,9 +74,16 @@ router.post('/login', async (req, res) => {
             expiresIn: `${JWT_EXPIRY_REFRESH}`,
         });
 
+        console.log(user._id);
+
         res.status(200)
             // refresh token goes into cookie
             .cookie('refreshToken', refreshToken, {
+                httpOnly: true,
+                sameSite: 'strict'
+            })
+            // same thing for this user's id
+            .cookie('currentUserId', user._id.toString() , {
                 httpOnly: true,
                 sameSite: 'strict'
             })

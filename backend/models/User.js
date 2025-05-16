@@ -45,7 +45,22 @@ const userSchema = new mongoose.Schema({
         type: Boolean,
         default: false
     }
-}, { timestamps: true });
+}, { 
+    timestamps: true, 
+    // passing virtual fields to user objects and JSONs
+    toObject: { virtuals: true }, 
+    toJSON: { virtuals: true },
+});
+
+// creating a virtual userProfile field
+// that is a reference to the corresponding
+// userProfile of a user
+userSchema.virtual('userProfile', {
+    ref: 'UserProfile',
+    localField: '_id',
+    foreignField: 'userId',
+    justOne: true
+});
 
 // creates an index on email to assure uniqueness of emails
 // for not deleted users
