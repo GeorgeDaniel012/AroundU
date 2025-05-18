@@ -41,7 +41,7 @@ router.get('/:groupId/members', async (req, res) => {
                 // and their userIcon through the userProfile virtual field
                 populate: {
                     path: 'userProfile',
-                    select: '-userId -_id userIcon'
+                    select: '-userId -_id userIcon displayName'
                 }
             });
             //.populate('members.member', 'username userProfile')

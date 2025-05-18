@@ -145,12 +145,12 @@ router.put('/join/:groupId', verifyToken, async (req, res) => {
         // ofc, a user needs to not be in a group to be able to join that group
         const userInGroup = group.members.some(member => member.member.equals(userId));
         if (userInGroup) {
-            return res.status(400).json({ message: 'User already in group' });
+            return res.status(400).json({ error: 'User already in group' });
         }
 
         const userIsBanned = group.bannedUsers.some(user => user.userId.equals(userId));
         if (userIsBanned) {
-            return res.status(400).json({ message: 'User is banned from group' });
+            return res.status(400).json({ error: 'User is banned from group' });
         }
 
         // group needs to be freely joinable for user to join directly
@@ -159,7 +159,7 @@ router.put('/join/:groupId', verifyToken, async (req, res) => {
             // user needs to not have sent an existing request before
             const userSentRequest = group.joinRequests.some(user => user.userId.equals(userId));
             if (userSentRequest) {
-                return res.status(400).json({ message: 'User already sent join request' });
+                return res.status(400).json({ error: 'User already sent join request' });
             }
 
             group.joinRequests.push({ userId: userId }); // manually putting requestedAt to Date.now errors out
@@ -204,11 +204,11 @@ router.put('/leave/:groupId', verifyToken, async (req, res) => {
         // ofc, a user needs to be in a group to be able to leave that group
         const userInGroup = group.members.find(member => member.member.equals(userId));
         if (!userInGroup) {
-            return res.status(400).json({ message: 'User not in group' });
+            return res.status(400).json({ error: 'User not in group' });
         }
         // if user is group owner they cannot leave before transferring ownership
         if (userInGroup.permission === 3) {
-            return res.status(400).json({ message: 'User is owner of group' });
+            return res.status(400).json({ error: 'User is owner of group' });
         }
 
         // user is removed from member list

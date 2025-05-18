@@ -7,6 +7,7 @@ import BackButton from "../components/BackButton";
 import globalStyles from "../styles/globalStyles";
 import { scaleSize } from "../utils/helpers";
 import Icon from "react-native-vector-icons/FontAwesome5";
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const ProfileScreen = ({ navigation, ...props }) => {
     const { userId } = props.route.params;
@@ -17,6 +18,7 @@ const ProfileScreen = ({ navigation, ...props }) => {
     const [groups, setGroups] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [imageError, setImageError] = useState(false);
+    const [isCurrentUsersProfile, setIsCurrentUsersProfile] = useState(false);
 
     const { accessToken } = useContext(AuthContext);
 
@@ -60,6 +62,13 @@ const ProfileScreen = ({ navigation, ...props }) => {
             if (resUserGroups.status === 200) {
                 const groups = await resUserGroups.data;
                 setGroups(groups);
+            }
+
+            const currentUserId = await AsyncStorage.getItem('currentUserId');
+            // if there isn't a userId provided by the route
+            // or there is and it's the current user's id
+            if (userId.length === 0 || currentUserId === userId) {
+                setIsCurrentUsersProfile(true);
             }
 
             setIsLoading(false);
@@ -108,7 +117,7 @@ const ProfileScreen = ({ navigation, ...props }) => {
                     </View>
                     <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
                         {
-                            userId.length === 0 &&
+                            isCurrentUsersProfile &&
                             <TouchableOpacity 
                                 style={globalStyles.buttons} 
                                 onPress={() => {navigation.navigate('EditProfile', { // passing user info as props/params
