@@ -1,7 +1,7 @@
 import { useNavigation, CommonActions } from "@react-navigation/native";
 import React, { useContext, useEffect, useState } from "react";
 import { View, Text, TouchableOpacity, Image, TextInput, Alert } from "react-native";
-import { scaleSize } from "../utils/helpers";
+import { scaleSize, removeLastScreenFromNavigationStack } from "../utils/helpers";
 import { CONNECTION } from "../config/config";
 import BackButton from "../components/BackButton";
 import ImageCropPicker from "react-native-image-crop-picker";
@@ -56,6 +56,7 @@ const EditProfile = ({ navigation, ...props }) => {
                 const errorMessage = resText.data.error;
                 console.log(errorMessage);
                 Alert.alert('Error', errorMessage);
+                return;
             }
 
             if (resText.status === 200) {
@@ -82,23 +83,16 @@ const EditProfile = ({ navigation, ...props }) => {
                     const errorMessage = resPic.data.error;
                     console.log(errorMessage);
                     Alert.alert('Error', errorMessage);
+                    return;
                 }
 
                 if (resPic.status === 200) {
-                    console.log('aafaf');
+                    console.log('Pic updated');
                     // Alert.alert('Success', 'Updated user profile successfully!');
                 }
             }
 
-            navigation.dispatch(
-                CommonActions.reset({
-                    index: 0,
-                    routes: [
-                        { name: 'MainBottomTabs' },
-                        { name: 'ProfileScreen', params: { userId: '' } },
-                    ],
-                })
-            );
+            removeLastScreenFromNavigationStack(navigation);
         } catch (err) {
             console.error('Error saving user profile changes:', err);
             Alert.alert('Error', 'Failed to save changes to user profile');

@@ -282,7 +282,7 @@ const MemberManageModal = ({ navigation, ...props }) => {
 const GroupInfo = ({ navigation, ...props }) => {
     const { group } = props.route.params;
     const groupId = group._id;
-    const [groupInfo, setGroupInfo] = useState({});
+    const [groupInfo, setGroupInfo] = useState(group);
     const [currentUserId, setCurrentUserId] = useState('');
     const [permissionLevel, setPermissionLevel] = useState(0);
     const [userInGroup, setUserInGroup] = useState(false);
@@ -514,7 +514,7 @@ const GroupInfo = ({ navigation, ...props }) => {
                                 permissionLevel >= 2 && 
                                 <TouchableOpacity 
                                     style={globalStyles.buttons} 
-                                    onPress={() => Linking.openURL(`https://www.google.com/maps/search/?api=1&query=${groupInfo.location.coordinates[1]}%2C${groupInfo.location.coordinates[0]}`)}
+                                    onPress={() => navigation.navigate('EditGroup', { groupInfo: groupInfo })}
                                 >
                                     <Text style={{...globalStyles.buttonText, fontSize: scaleSize(22)}}>Edit</Text>
                                     <Icon name="edit" size={scaleSize(21)} color='white' style={{marginLeft: 10}}/>

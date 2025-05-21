@@ -13,6 +13,23 @@ export const resetNavigationStack = (navigation, screen) => {
     );
 }
 
+// removes the last screen from the navigation stack
+export const removeLastScreenFromNavigationStack = (navigation) => {
+    const stackRoutes = navigation.getState().routes;
+
+    // forcing each screen in the stack to remount/refresh
+    const routes = stackRoutes.slice(0, -1).map(route => ({
+        ...route, key: `${route.name}-${Date.now()}`,
+    }));
+
+    navigation.dispatch(
+        CommonActions.reset({
+            index: routes.length - 1,
+            routes: routes,
+        })
+    );
+}
+
 // distance between 2 points, calculated using the haversine formula
 // code adapted from https://www.movable-type.co.uk/scripts/latlong.html
 export const distanceBetweenPoints = (userLocation, groupLocation) => {

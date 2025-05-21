@@ -1,16 +1,18 @@
 import React, { useContext, useEffect, useRef, useState } from "react";
+import { useNavigation, CommonActions } from "@react-navigation/native";
 import { View, Text, StyleSheet, TextInput, FlatList, TouchableOpacity, ScrollView, Alert, Button, Modal, TouchableWithoutFeedback, Dimensions, Pressable } from "react-native";
 import Icon from "react-native-vector-icons/FontAwesome5";
-import { getScreenHeight, removeLastScreenFromNavigationStack, resetNavigationStack, scaleSize, themeList } from "../utils/helpers";
+import { getScreenHeight, removeLastScreenFromNavigationStack, scaleSize, themeList } from "../utils/helpers";
 import { Checkbox } from "react-native-paper";
 import MapView, { Callout, Marker } from 'react-native-maps';
 import axiosInstance from "../utils/axiosInstance";
 import { AuthContext } from "../contexts/AuthContext";
 import BackButton from "../components/BackButton";
 import globalStyles from "../styles/globalStyles";
+import { CONNECTION } from "../config/config";
 
 const MapModal = (props) => {
-    const { closeModal, isVisible, markerLocation, setMarkerLocation } = props;
+    const { closeModal, isVisible, markerLocation, setMarkerLocation, setLocationChanged } = props;
     const [region, setRegion] = useState({
         latitude: 45.434169,
         longitude: 28.019074,
@@ -72,6 +74,8 @@ const MapModal = (props) => {
             latitude: parseFloat(latitudeText),
             longitude: parseFloat(longitudeText)
         });
+
+        setLocationChanged();
     }
 
     return (
@@ -221,19 +225,25 @@ const TagComponent = (props) => {
     );
 }
 
-const CreateGroupScreen = ({ navigation }) => {
-    const [groupName, setGroupName] = useState('');
-    const [theme, setTheme] = useState('');
-    const [description, setDescription] = useState('');
-    const [requestToJoin, setRequestToJoin] = useState(true);
-    const [tags, setTags] = useState([]);
+const EditGroupScreen = ({ navigation, ...props }) => {
+    const { groupInfo } = props.route.params;
+    const [groupIcon, setGroupIcon] = useState( `${CONNECTION}/static/${groupInfo.groupIcon}`);
+    const [groupName, setGroupName] = useState(groupInfo.groupName);
+    const [theme, setTheme] = useState(groupInfo.theme);
+    const [description, setDescription] = useState(groupInfo.description);
+    const [requestToJoin, setRequestToJoin] = useState(!groupInfo.everyoneCanJoin);
+    const [tags, setTags] = useState(groupInfo.tags);
     const [tagText, setTagText] = useState('');
     const [location, setLocation] = useState({
-        latitude: 45.434169,
-        longitude: 28.019074,
+        latitude: groupInfo.location.coordinates[1],
+        longitude: groupInfo.location.coordinates[0],
     });
     const [isMapModalVisible, setMapModalVisible] = useState(false);
     const [isTagModalVisible, setTagModalVisible] = useState(false);
+
+    const [hasLocationChanged, setLocationChanged] = useState(false);
+    const [hasIconChanged, setIconChanged] = useState(false);
+
     const { accessToken } = useContext(AuthContext);
 
     const handleAddTag = () => {
@@ -254,7 +264,7 @@ const CreateGroupScreen = ({ navigation }) => {
         setTagText('');
     }
 
-    const handleCreateGroup = async () => {
+    const handleSaveGroupEdits = async () => {
         try {
             if (!groupName || !theme || !description) {
                 console.log('Not all required fields are filled out');
@@ -262,15 +272,13 @@ const CreateGroupScreen = ({ navigation }) => {
                 return;
             }
 
-            const res = await axiosInstance.post('/group', {
+            const resGeneral = await axiosInstance.put(`/group/${groupInfo._id}/general`, {
                 groupName: groupName,
                 theme: theme,
                 description: description,
                 tags: tags,
                 // user requests to join, so not everyone can join automatically
                 everyoneCanJoin: !requestToJoin,
-                lat: location.latitude,
-                lon: location.longitude
             }, {
                 headers: {
                     'Authorization': `Bearer ${accessToken}`
@@ -278,24 +286,93 @@ const CreateGroupScreen = ({ navigation }) => {
                 validateStatus: status => status < 500, // throw error if status is at least 500
             });
 
-            console.log(res);
+            console.log('general: ', resGeneral);
 
-            if (res.status >= 400 ) {
-                const errorMessage = res.data.error;
+            if (resGeneral.status >= 400 ) {
+                const errorMessage = resGeneral.data.error;
                 console.log(errorMessage);
                 Alert.alert('Error', errorMessage);
+                return;
             }
 
-            if (res.status === 201) {
-                console.log('Group created');
-                Alert.alert('Success', 'Group created');
-                removeLastScreenFromNavigationStack(navigation);
+            if (resGeneral.status === 200) {
+                console.log('Group updated');
+                Alert.alert('Success', 'Updated group successfully');
             }
+
+            if (hasLocationChanged) {
+                const resLocation = await axiosInstance.put(`/group/${groupInfo._id}/location`, {
+                    lat: location.latitude,
+                    lon: location.longitude
+                }, {
+                    headers: {
+                        'Authorization': `Bearer ${accessToken}`
+                    },
+                    validateStatus: status => status < 500, // throw error if status is at least 500
+                });
+
+                console.log('location: ', resLocation);
+
+                if (resLocation.status >= 400 ) {
+                    const errorMessage = resLocation.data.error;
+                    console.log(errorMessage);
+                    Alert.alert('Error', errorMessage);
+                    return;
+                }
+
+                if (resLocation.status === 200) {
+                    console.log('Location updated');
+                    //Alert.alert('Success', 'Group edited');
+                }
+            }
+
+            if (hasIconChanged) {
+                const form = new FormData();
+                form.append('groupIcon', {
+                    uri: groupIcon,
+                    name: `icon.jpg`,
+                    type: 'image/jpeg'
+                });
+
+                const resPic = await axiosInstance.putForm(`/group/${groupInfo._id}/pic`, form, {
+                    headers: {
+                        'Authorization': `Bearer ${accessToken}`,
+                        'Content-Type': 'multipart/form-data'
+                    },
+                    validateStatus: status => status < 500, // throw error if status is at least 500
+                });
+
+                if (resPic.status >= 400) {
+                    const errorMessage = resPic.data.error;
+                    console.log(errorMessage);
+                    Alert.alert('Error', errorMessage);
+                    return;
+                }
+
+                if (resPic.status === 200) {
+                    console.log('Pic updated');
+                    // Alert.alert('Success', 'Updated group icon successfully!');
+                }
+            }
+
+            // navigation.dispatch(
+            //     CommonActions.reset({
+            //         index: 1,
+            //         routes: [
+            //             { name: 'MainBottomTabs', state: { routes: [{ name: 'Discover' }] } },
+            //             { name: 'GroupInfo', params: { group: groupInfo } },
+            //         ],
+            //     })
+            // );
+
+            removeLastScreenFromNavigationStack(navigation);
         } catch (err) {
-            console.error('Error creating group:', err);
-            Alert.alert('Error', 'Failed to create group');
+            console.error('Error updating group:', err);
+            Alert.alert('Error', 'Failed to update group');
         }
     }
+
+    useEffect(() => console.log(groupInfo), []);
 
     return (
         <ScrollView contentContainerStyle={{ justifyContent: 'center', alignItems: 'center' }}>
@@ -352,8 +429,8 @@ const CreateGroupScreen = ({ navigation }) => {
                     <Icon name="tag" size={scaleSize(30)} color="white"/>
                 </TouchableOpacity>
 
-                <TouchableOpacity style={globalStyles.buttons} onPress={handleCreateGroup}>
-                    <Text style={{...globalStyles.buttonText, fontSize: scaleSize(22), marginRight: 0}}>Create Group</Text>
+                <TouchableOpacity style={globalStyles.buttons} onPress={handleSaveGroupEdits}>
+                    <Text style={{...globalStyles.buttonText, fontSize: scaleSize(22), marginRight: 0}}>Save Group Edits</Text>
                 </TouchableOpacity>
             </View>
 
@@ -362,6 +439,7 @@ const CreateGroupScreen = ({ navigation }) => {
                 closeModal={() => setMapModalVisible(false)}
                 markerLocation={location}
                 setMarkerLocation={setLocation}
+                setLocationChanged={() => setLocationChanged(true)}
             />
 
             <TagModal
@@ -373,7 +451,6 @@ const CreateGroupScreen = ({ navigation }) => {
                 tagText={tagText}
                 setTagText={setTagText}
             />
-            
         </ScrollView>
     );
 }
@@ -422,4 +499,4 @@ const styles = StyleSheet.create({
     }
 });
 
-export default CreateGroupScreen;
+export default EditGroupScreen;
