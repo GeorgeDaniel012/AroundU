@@ -50,7 +50,7 @@ const groupSchema = new mongoose.Schema({
                     type: Date,
                     default: Date.now // time when user joins group
                 },
-                _id: false // otherwise each member object will have it's own id in the members array
+                _id: false // otherwise each member object will have its own id in the members array
             }
         ],
         required: true,
@@ -71,12 +71,12 @@ const groupSchema = new mongoose.Schema({
     joinRequests: { // array of users that requested to join group, with their _id and request time
         type: [
             {
-                userId: { type: mongoose.Types.ObjectId, ref: 'User' },
+                user: { type: mongoose.Types.ObjectId, ref: 'User' },
                 requestedAt: {
                     type: Date,
                     default: Date.now // time when user requests to join group
                 },
-                _id: false // otherwise each joinRequests object will have it's own id in the joinRequests array
+                _id: false // otherwise each joinRequests object will have its own id in the joinRequests array
             }
         ],
         required: false,
@@ -86,12 +86,12 @@ const groupSchema = new mongoose.Schema({
    bannedUsers: { // array of users that were banned from group, with their _id and ban time
         type: [
             {
-                userId: { type: mongoose.Types.ObjectId, ref: 'User' },
+                user: { type: mongoose.Types.ObjectId, ref: 'User' },
                 bannedAt: {
                     type: Date,
                     default: Date.now // time when user is banned from group
                 },
-                _id: false // otherwise each bannedUsers object will have it's own id in the bannedUsers array
+                _id: false // otherwise each bannedUsers object will have its own id in the bannedUsers array
             }
         ],
         required: false,

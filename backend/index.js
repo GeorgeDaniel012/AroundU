@@ -28,6 +28,13 @@ app.get('/', (req, res) => {
     res.send('Hello World');
 });
 
+app.use((req, res, next) => {
+  console.log(`Incoming ${req.method} to ${req.url}`);
+  req.on('end', () => console.log(`Request finished - ${req.method} to ${req.url}`));
+  req.on('close', () => console.log(`Request closed - ${req.method} to ${req.url}`));
+  next();
+});
+
 app.use('/', authRoutes);
 app.use('/user', userRoutes);
 app.use('/group', groupRoutes);

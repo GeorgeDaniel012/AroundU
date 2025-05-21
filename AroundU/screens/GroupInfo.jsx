@@ -9,6 +9,7 @@ import { CONNECTION } from '../config/config';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { CommonActions } from '@react-navigation/native';
 import { AuthContext } from '../contexts/AuthContext';
+import ReviewRequestsModal from '../components/ReviewRequestsModal';
 
 const permissionLevelsList = [
     {
@@ -293,6 +294,8 @@ const GroupInfo = ({ navigation, ...props }) => {
     const [selectedMember, setSelectedMember] = useState(null);
     const [selectedMemberPermission, setSelectedMemberPermission] = useState(0);
 
+    const [isRequestsModalVisible, setRequestsModalVisible] = useState(false);
+
     const { accessToken } = useContext(AuthContext);
 
     const handleJoinGroup = async () => {
@@ -560,6 +563,22 @@ const GroupInfo = ({ navigation, ...props }) => {
                 groupId={groupId}
                 fetchInfo={fetchInfo}
             />
+
+            {permissionLevel >= 2 &&
+                <TouchableOpacity style={styles.requestsButton} onPress={() => setRequestsModalVisible(true)}>
+                    <Icon size={35} name="envelope" color="white"/>
+                </TouchableOpacity>
+            }
+
+            <ReviewRequestsModal
+                isVisible={isRequestsModalVisible}
+                closeModal={() => setRequestsModalVisible(false)}
+                navigation={navigation}
+                currentUserId={currentUserId}
+                accessToken={accessToken}
+                groupId={groupId}
+                fetchInfo={fetchInfo}
+            />
         </ScrollView>
     )
 }
@@ -610,6 +629,14 @@ const styles = StyleSheet.create({
     },
     modalOptions: {
         margin: 10
+    },
+    requestsButton: {
+        position: 'absolute',
+        top: 20,
+        right: 20,
+        backgroundColor: 'black',
+        borderRadius: 10,
+        padding: 3
     }
 });
 
