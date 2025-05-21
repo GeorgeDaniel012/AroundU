@@ -103,7 +103,7 @@ const MapModal = (props) => {
 
                 <View style={styles.locationInputView}>
                     <TextInput
-                        style={{...styles.input, width: 260, marginRight: 10}}
+                        style={{...globalStyles.input, width: 260, marginRight: 10}}
                         onChangeText={setLatitudeText}
                         value={markerLocation.latitude}
                         placeholder={`Latitude: ${truncateFloat(markerLocation.latitude, 6)}`}
@@ -111,7 +111,7 @@ const MapModal = (props) => {
                         keyboardType="numeric"
                     />
                     <TextInput
-                        style={{...styles.input, width: 260, marginRight: 10}}
+                        style={{...globalStyles.input, width: 260, marginRight: 10}}
                         onChangeText={setLongitudeText}
                         value={markerLocation.longitude}
                         placeholder={`Longitude: ${truncateFloat(markerLocation.longitude, 6)}`}
@@ -300,7 +300,7 @@ const CreateGroupScreen = ({ navigation }) => {
     return (
         <ScrollView contentContainerStyle={{ justifyContent: 'center', alignItems: 'center' }}>
             <BackButton navigation={navigation}/>
-            <View style={{ justifyContent: 'center', alignItems: 'center', marginTop: 20 }}>
+            <View style={{ justifyContent: 'center', alignItems: 'center', marginTop: 60 }}>
                 <TextInput
                     style={globalStyles.input}
                     onChangeText={setGroupName}

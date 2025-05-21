@@ -7,15 +7,13 @@ import { scaleSize } from '../utils/helpers';
 import axiosInstance from '../utils/axiosInstance';
 import { CONNECTION } from '../config/config';
 
-const Request = ({navigation, ...props}) => {
-    const { user, closeModal, groupId, accessToken, fetchInfo, currentRequests, setCurrentRequests } = props;
+const BannedUser = ({navigation, ...props}) => {
+    const { bannedUser, closeModal, groupId, accessToken, currentBannedUsers, setCurrentBannedUsers } = props;
     const [imageError, setImageError] = useState(false);
 
-    const handleRequest = async (isAccepted) => {
+    const handleUnban = async () => {
         try {
-            const res = await axiosInstance.put(`/group/${groupId}/requests/${user._id}`, {
-                isAccepted: isAccepted
-            }, {
+            const res = await axiosInstance.put(`/group/${groupId}/unban/${bannedUser._id}`, {}, {
                 headers: {
                     'Authorization': `Bearer ${accessToken}`,
                     'Content-Type': 'application/json'
@@ -30,30 +28,21 @@ const Request = ({navigation, ...props}) => {
             }
 
             if (res.status === 200) {
-                Alert.alert('Success',
-                    isAccepted ? 
-                    'Request accepted successfully!' :
-                    'Request rejected successfully.'
-                );
-                // excluding the current request from the requests list
-                const filteredRequests = currentRequests.filter(request => request.user._id !== user._id);
-                setCurrentRequests(filteredRequests);
-                fetchInfo();
+                Alert.alert('Success', 'User unbanned successfully.');
+                // excluding the current user from the banned users list
+                const filteredBannedUsers = currentBannedUsers.filter(user => user.user._id !== bannedUser._id);
+                setCurrentBannedUsers(filteredBannedUsers);
             }
         } catch (err) {
-            console.error('Error handling request:', err);
-            Alert.alert('Error', 
-                isAccepted ? 
-                'Failed to accept request' :
-                'Failed to reject request'
-            );
+            console.error('Error unbanning user:', err);
+            Alert.alert('Error', 'Failed to unban user');
         }
     }
     
     return (
         <TouchableOpacity
             style={styles.user}
-            onPress={() => navigation.navigate("ProfileScreen", { userId: user._id })}
+            onPress={() => navigation.navigate("ProfileScreen", { userId: bannedUser._id })}
         >
             <View style={{ flex: 1, flexDirection: 'row', gap: 20, alignItems: 'center' }}>
                 {
@@ -64,7 +53,7 @@ const Request = ({navigation, ...props}) => {
                         resizeMode="contain"
                     /> :
                     <Image
-                        source={{ uri: `${CONNECTION}/static/${user.userProfile.userIcon}`, cache: 'reload' }}
+                        source={{ uri: `${CONNECTION}/static/${bannedUser.userProfile.userIcon}`, cache: 'reload' }}
                         style={{ width: scaleSize(30), height: scaleSize(30), borderRadius: 50 }}
                         resizeMode="contain"
                         onError={({nativeEvent: {error}}) => {
@@ -73,13 +62,10 @@ const Request = ({navigation, ...props}) => {
                         }}
                     />
                 }
-                <Text style={{...globalStyles.unselectedThemeText}}>{user.userProfile.displayName}</Text>
+                <Text style={{...globalStyles.unselectedThemeText}}>{bannedUser.userProfile.displayName}</Text>
             </View>
             <View style={styles.acceptOrReject}>
-                <TouchableOpacity onPress={() => handleRequest(true)}>
-                    <Icon name="check" size={32} color="green"/>
-                </TouchableOpacity>
-                <TouchableOpacity onPress={() => handleRequest(false)}>
+                <TouchableOpacity onPress={() => handleUnban()}>
                     <Icon name="times" size={32} color="red"/>
                 </TouchableOpacity>
             </View>
@@ -87,14 +73,14 @@ const Request = ({navigation, ...props}) => {
     );
 }
 
-const ReviewRequestsModal = ({navigation, ...props}) => {
-    const { isVisible, closeModal, groupId, memberList, setMemberList, accessToken, currentUserId, fetchInfo } = props;
-    const [currentRequests, setCurrentRequests] = useState([]);
+const BannedUsersModal = ({navigation, ...props}) => {
+    const { isVisible, closeModal, groupId, accessToken } = props;
+    const [currentBannedUsers, setCurrentBannedUsers] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
 
-    const fetchRequests = async () => {
+    const fetchBannedUsers = async () => {
         try {
-            const res = await axiosInstance.get(`/group/${groupId}/requests`, {
+            const res = await axiosInstance.get(`/group/${groupId}/ban`, {
                 headers: {
                     'Authorization': `Bearer ${accessToken}`,
                     'Content-Type': 'application/json'
@@ -109,11 +95,11 @@ const ReviewRequestsModal = ({navigation, ...props}) => {
             }
 
             if (res.status === 200) {
-                setCurrentRequests(res.data.joinRequests);
+                console.log('bannedUsers:', res.data.bannedUsers);
+                setCurrentBannedUsers(res.data.bannedUsers);
             }
 
             setIsLoading(false);
-            fetchInfo();
         } catch (err) {
             console.error('Error fetching group info:', err);
             Alert.alert('Error', 'Failed to fetch group info');
@@ -121,7 +107,7 @@ const ReviewRequestsModal = ({navigation, ...props}) => {
     }
 
     useEffect(() => {
-        if (isVisible) fetchRequests();
+        if (isVisible) fetchBannedUsers();
     }, [isVisible]);
 
     return (
@@ -134,25 +120,24 @@ const ReviewRequestsModal = ({navigation, ...props}) => {
             <BackButton onPress={closeModal}/>
             <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
                 <View style={{ alignItems: 'center' }}>
-                    <Text style={{...globalStyles.unselectedThemeText, marginBottom: 20}}>Join requests:</Text>
-                    <ScrollView style={{ maxHeight: 400, minWidth: '80%' }} contentContainerStyle={styles.requestsContainer}>
+                    <Text style={{...globalStyles.unselectedThemeText, marginBottom: 20}}>Banned users:</Text>
+                    <ScrollView style={{ maxHeight: 400, minWidth: '80%' }} contentContainerStyle={styles.bannedUsersContainer}>
                         {isLoading ?
                             <Text>Loading</Text> :
-                            currentRequests.length !== 0 ?
-                                currentRequests.map((request, index) =>
-                                    <Request
-                                        key={`${request.user._id}-${index}`}
-                                        user={request.user}
+                            currentBannedUsers.length !== 0 ?
+                                currentBannedUsers.map((user, index) =>
+                                    <BannedUser
+                                        key={`${user.user._id}-${index}`}
+                                        bannedUser={user.user}
                                         navigation={navigation}
                                         closeModal={closeModal}
                                         groupId={groupId}
                                         accessToken={accessToken}
-                                        fetchInfo={fetchInfo}
-                                        currentRequests={currentRequests}
-                                        setCurrentRequests={setCurrentRequests}
+                                        currentBannedUsers={currentBannedUsers}
+                                        setCurrentBannedUsers={setCurrentBannedUsers}
                                     />
                                 ) :
-                                <Text style={{...globalStyles.unselectedThemeText, padding: 20}}>No requests</Text>
+                                <Text style={{...globalStyles.unselectedThemeText, padding: 20}}>No banned users</Text>
                         }
                     </ScrollView>
                 </View>
@@ -173,7 +158,7 @@ const styles = StyleSheet.create({
         // borderRadius: 5,
         // borderWidth: 1,
     },
-    requestsContainer: {
+    bannedUsersContainer: {
         borderRadius: 5,
         borderWidth: 2,
         justifyContent: 'center',
@@ -189,4 +174,4 @@ const styles = StyleSheet.create({
     },
 });
 
-export default ReviewRequestsModal;
+export default BannedUsersModal;

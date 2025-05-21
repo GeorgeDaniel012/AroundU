@@ -289,7 +289,7 @@ router.put('/:groupId/ban/:bannedUserId', verifyToken, async (req, res) => {
         // if user is in group they are removed
         group.members = group.members.filter(member => !member.member.equals(bannedUserId));
         // they are then added to banned user list
-        group.bannedUsers.push({ userId: bannedUserId });
+        group.bannedUsers.push({ user: bannedUserId });
         await group.save();
 
         // if user is in group the group is removed from their list
@@ -332,7 +332,7 @@ router.put('/:groupId/unban/:unbannedUserId', verifyToken, async (req, res) => {
         
         // authenticated user needs to be admin or owner to unban users
         const permittedUser = group.members.find(member => member.member.equals(userId) && member.permission >= 2);
-        const toBeUnbannedUser = group.bannedUsers.find(user => user.userId.equals(unbannedUserId));
+        const toBeUnbannedUser = group.bannedUsers.find(user => user.user.equals(unbannedUserId));
         // so if no user that was previously banned with this id exists
         // or user is not permitted to unban
         if (!permittedUser || !toBeUnbannedUser) {
@@ -340,7 +340,7 @@ router.put('/:groupId/unban/:unbannedUserId', verifyToken, async (req, res) => {
         }
 
         // user is removed from ban list
-        group.bannedUsers = group.bannedUsers.filter(user => !user.userId.equals(unbannedUserId));
+        group.bannedUsers = group.bannedUsers.filter(user => !user.user.equals(unbannedUserId));
         await group.save();
         res.status(200).json({ message: 'User unbanned successfully' });
     } catch (err) {

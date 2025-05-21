@@ -11,14 +11,15 @@ import BackButton from "../components/BackButton";
 import ImageCropPicker from "react-native-image-crop-picker";
 import globalStyles from "../styles/globalStyles";
 import { CONNECTION } from "../config/config";
+import BannedUsersModal from "../components/BannedUsersModal";
 
 const MapModal = (props) => {
     const { closeModal, isVisible, markerLocation, setMarkerLocation, setLocationChanged } = props;
     const [region, setRegion] = useState({
         latitude: 45.434169,
         longitude: 28.019074,
-        latitudeDelta: 0.066345,
-        longitudeDelta: 0.045896,
+        latitudeDelta: 0.022115,
+        longitudeDelta: 0.015298,
     });
     const [latitudeText, setLatitudeText] = useState('');
     const [longitudeText, setLongitudeText] = useState('');
@@ -75,8 +76,6 @@ const MapModal = (props) => {
             latitude: parseFloat(latitudeText),
             longitude: parseFloat(longitudeText)
         });
-
-        setLocationChanged();
     }
 
     return (
@@ -92,8 +91,8 @@ const MapModal = (props) => {
                     initialRegion={{
                         latitude: markerLocation.latitude,
                         longitude: markerLocation.longitude,
-                        latitudeDelta: 0.066345,
-                        longitudeDelta: 0.045896,
+                        latitudeDelta: 0.022115,
+                        longitudeDelta: 0.015298,
                     }}
                     onRegionChangeComplete={onRegionChange}
                     toolbarEnabled={false}
@@ -108,7 +107,7 @@ const MapModal = (props) => {
 
                 <View style={styles.locationInputView}>
                     <TextInput
-                        style={{...styles.input, width: 260, marginRight: 10}}
+                        style={{...globalStyles.input, width: 260, marginRight: 10}}
                         onChangeText={setLatitudeText}
                         value={markerLocation.latitude}
                         placeholder={`Latitude: ${truncateFloat(markerLocation.latitude, 6)}`}
@@ -116,7 +115,7 @@ const MapModal = (props) => {
                         keyboardType="numeric"
                     />
                     <TextInput
-                        style={{...styles.input, width: 260, marginRight: 10}}
+                        style={{...globalStyles.input, width: 260, marginRight: 10}}
                         onChangeText={setLongitudeText}
                         value={markerLocation.longitude}
                         placeholder={`Longitude: ${truncateFloat(markerLocation.longitude, 6)}`}
@@ -127,7 +126,7 @@ const MapModal = (props) => {
                         <TouchableOpacity style={globalStyles.buttons} onPress={handleSetMarker}>
                             <Text style={{...globalStyles.buttonText, marginRight: 0}}>Set Marker</Text>
                         </TouchableOpacity>
-                        <TouchableOpacity style={{...globalStyles.buttons}} onPress={closeModal}>
+                        <TouchableOpacity style={{...globalStyles.buttons}} onPress={() => { closeModal(); setLocationChanged(); }}>
                             <Text style={{...globalStyles.buttonText, marginRight: 0, textAlign: 'center'}}>Save Marker</Text>
                         </TouchableOpacity>
                     </View>
@@ -242,6 +241,7 @@ const EditGroupScreen = ({ navigation, ...props }) => {
     });
     const [isMapModalVisible, setMapModalVisible] = useState(false);
     const [isTagModalVisible, setTagModalVisible] = useState(false);
+    const [isBannedUsersModalVisible, setBannedUsersModalVisible] = useState(false);
 
     const [hasLocationChanged, setLocationChanged] = useState(false);
     const [hasIconChanged, setIconChanged] = useState(false);
@@ -303,8 +303,6 @@ const EditGroupScreen = ({ navigation, ...props }) => {
                 validateStatus: status => status < 500, // throw error if status is at least 500
             });
 
-            console.log('general: ', resGeneral);
-
             if (resGeneral.status >= 400 ) {
                 const errorMessage = resGeneral.data.error;
                 console.log(errorMessage);
@@ -327,8 +325,6 @@ const EditGroupScreen = ({ navigation, ...props }) => {
                     },
                     validateStatus: status => status < 500, // throw error if status is at least 500
                 });
-
-                console.log('location: ', resLocation);
 
                 if (resLocation.status >= 400 ) {
                     const errorMessage = resLocation.data.error;
@@ -394,6 +390,11 @@ const EditGroupScreen = ({ navigation, ...props }) => {
     return (
         <ScrollView contentContainerStyle={{ justifyContent: 'center', alignItems: 'center' }}>
             <BackButton navigation={navigation}/>
+
+            <TouchableOpacity style={styles.bannedUsersButton} onPress={() => setBannedUsersModalVisible(true)}>
+                <Icon size={35} name="user-slash" color="white"/>
+            </TouchableOpacity>
+
             <View style={{ justifyContent: 'center', alignItems: 'center', marginTop: 20 }}>
                 <TouchableOpacity onPress={pickImage} style={{ justifyContent: 'center', alignItems: 'center' }}>
                     {
@@ -488,6 +489,14 @@ const EditGroupScreen = ({ navigation, ...props }) => {
                 tagText={tagText}
                 setTagText={setTagText}
             />
+
+            <BannedUsersModal
+                isVisible={isBannedUsersModalVisible}
+                closeModal={() => setBannedUsersModalVisible(false)}
+                navigation={navigation}
+                accessToken={accessToken}
+                groupId={groupInfo._id}
+            />
         </ScrollView>
     );
 }
@@ -533,6 +542,14 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
         //borderRadius: 20
+    },
+    bannedUsersButton: {
+        position: 'absolute',
+        top: 20,
+        right: 20,
+        backgroundColor: 'black',
+        borderRadius: 10,
+        padding: 3
     }
 });
 
