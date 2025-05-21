@@ -13,9 +13,9 @@ const storage = multer.diskStorage({
     destination: (req, file, cb) => {
         cb(null, uploadDirectory);
     },
-    // filename is id of user/group (which should be url-safe)
+    // filename is a random uuid (which should be url-safe and hopefully safe from collisions!)
     filename: (req, file, cb) => {
-        cb(null, req.userId + path.extname(file.originalname));
+        cb(null, crypto.randomUUID() + path.extname(file.originalname));
     },
 });
 

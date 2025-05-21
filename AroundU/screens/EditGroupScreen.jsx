@@ -1,6 +1,6 @@
 import React, { useContext, useEffect, useRef, useState } from "react";
 import { useNavigation, CommonActions } from "@react-navigation/native";
-import { View, Text, StyleSheet, TextInput, FlatList, TouchableOpacity, ScrollView, Alert, Button, Modal, TouchableWithoutFeedback, Dimensions, Pressable } from "react-native";
+import { View, Text, StyleSheet, TextInput, FlatList, TouchableOpacity, ScrollView, Alert, Button, Modal, TouchableWithoutFeedback, Dimensions, Pressable, Image } from "react-native";
 import Icon from "react-native-vector-icons/FontAwesome5";
 import { getScreenHeight, removeLastScreenFromNavigationStack, scaleSize, themeList } from "../utils/helpers";
 import { Checkbox } from "react-native-paper";
@@ -8,6 +8,7 @@ import MapView, { Callout, Marker } from 'react-native-maps';
 import axiosInstance from "../utils/axiosInstance";
 import { AuthContext } from "../contexts/AuthContext";
 import BackButton from "../components/BackButton";
+import ImageCropPicker from "react-native-image-crop-picker";
 import globalStyles from "../styles/globalStyles";
 import { CONNECTION } from "../config/config";
 
@@ -228,6 +229,7 @@ const TagComponent = (props) => {
 const EditGroupScreen = ({ navigation, ...props }) => {
     const { groupInfo } = props.route.params;
     const [groupIcon, setGroupIcon] = useState( `${CONNECTION}/static/${groupInfo.groupIcon}`);
+    const [imageError, setImageError] = useState(false);
     const [groupName, setGroupName] = useState(groupInfo.groupName);
     const [theme, setTheme] = useState(groupInfo.theme);
     const [description, setDescription] = useState(groupInfo.description);
@@ -245,6 +247,21 @@ const EditGroupScreen = ({ navigation, ...props }) => {
     const [hasIconChanged, setIconChanged] = useState(false);
 
     const { accessToken } = useContext(AuthContext);
+
+    const pickImage = async () => {
+        const result = await ImageCropPicker.openPicker({
+            mediaType: 'photo',
+            cropping: true,
+            width: 400,
+            height: 400
+        });
+
+        if (result) {
+            setGroupIcon(result.path);
+            setIconChanged(true);
+            setImageError(false);
+        } 
+    }
 
     const handleAddTag = () => {
         if (!tagText) return;
@@ -378,6 +395,26 @@ const EditGroupScreen = ({ navigation, ...props }) => {
         <ScrollView contentContainerStyle={{ justifyContent: 'center', alignItems: 'center' }}>
             <BackButton navigation={navigation}/>
             <View style={{ justifyContent: 'center', alignItems: 'center', marginTop: 20 }}>
+                <TouchableOpacity onPress={pickImage} style={{ justifyContent: 'center', alignItems: 'center' }}>
+                    {
+                        imageError ?
+                        <Image
+                            source={ require('../assets/images/missing_group_icon.png') }
+                            style={{ width: scaleSize(140), height: scaleSize(140), borderRadius: 100 }}
+                            resizeMode="contain"
+                        /> :
+                        <Image
+                            source={{ uri: groupIcon, cache: 'reload' }}
+                            style={{ width: scaleSize(140), height: scaleSize(140), borderRadius: 100 }}
+                            resizeMode="contain"
+                            onError={({nativeEvent: {error}}) => {
+                                console.log("err", error);
+                                setImageError(true);
+                            }}
+                        />
+                    }
+                </TouchableOpacity>
+
                 <TextInput
                     style={globalStyles.input}
                     onChangeText={setGroupName}
