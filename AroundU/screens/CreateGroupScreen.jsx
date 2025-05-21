@@ -1,7 +1,7 @@
 import React, { useContext, useEffect, useRef, useState } from "react";
 import { View, Text, StyleSheet, TextInput, FlatList, TouchableOpacity, ScrollView, Alert, Button, Modal, TouchableWithoutFeedback, Dimensions, Pressable } from "react-native";
 import Icon from "react-native-vector-icons/FontAwesome5";
-import { scaleSize, themeList } from "../utils/helpers";
+import { getScreenHeight, scaleSize, themeList } from "../utils/helpers";
 import { Checkbox } from "react-native-paper";
 import MapView, { Callout, Marker } from 'react-native-maps';
 import axiosInstance from "../utils/axiosInstance";
@@ -297,54 +297,65 @@ const CreateGroupScreen = ({ navigation }) => {
     }
 
     return (
-        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-            <TextInput
-                style={globalStyles.input}
-                onChangeText={setGroupName}
-                value={groupName}
-                placeholder="Group name (required)"
-                placeholderTextColor="grey"
-            />
-            <TextInput
-                style={{...globalStyles.input, height: scaleSize(70)}}
-                onChangeText={setDescription}
-                value={description}
-                placeholder="Description (required)"
-                placeholderTextColor="grey"
-                multiline
-            />
-            <View style={{ maxHeight: 200 }}>
-                <Text style={{ fontSize: scaleSize(16) }}>Group theme (required):</Text>
-                <ScrollView
-                    contentContainerStyle={{ flexWrap: 'wrap', maxWidth: 300, flexDirection: 'row' }}
-                    nestedScrollEnabled={true} 
-                    horizontal={false}
-                >
-                    {themeList.map((item, index) => (
-                        <ThemeComponent
-                            key={index}
-                            themeName={item.filterName}
-                            iconName={item.iconName}
-                            theme={theme}
-                            handleSetTheme={() => setTheme(item.filterName)}
-                        />
-                    ))}
-                </ScrollView>
-            </View>
-
-            <View style={styles.checkbox}>
-                <Checkbox
-                    status={requestToJoin ? 'checked' : 'unchecked'}
-                    onPress={() => setRequestToJoin(!requestToJoin)}
-                    color="black"
+        <ScrollView contentContainerStyle={{ justifyContent: 'center', alignItems: 'center' }}>
+            <BackButton navigation={navigation}/>
+            <View style={{ justifyContent: 'center', alignItems: 'center', marginTop: 20 }}>
+                <TextInput
+                    style={globalStyles.input}
+                    onChangeText={setGroupName}
+                    value={groupName}
+                    placeholder="Group name (required)"
+                    placeholderTextColor="grey"
                 />
-                <Text style={{ fontSize: scaleSize(18) }}>New members need to request access</Text>
+                <TextInput
+                    style={{...globalStyles.input, height: scaleSize(150)}}
+                    onChangeText={setDescription}
+                    value={description}
+                    placeholder="Description (required)"
+                    placeholderTextColor="grey"
+                    multiline
+                />
+                <View>
+                    <Text style={{ fontSize: scaleSize(16) }}>Group theme (required):</Text>
+                    <View
+                        style={{ flexWrap: 'wrap', maxWidth: 300, flexDirection: 'row' }}
+                    >
+                        {themeList.map((item, index) => (
+                            <ThemeComponent
+                                key={index}
+                                themeName={item.filterName}
+                                iconName={item.iconName}
+                                theme={theme}
+                                handleSetTheme={() => setTheme(item.filterName)}
+                            />
+                        ))}
+                    </View>
+                </View>
+
+                <View style={styles.checkbox}>
+                    <Checkbox
+                        status={requestToJoin ? 'checked' : 'unchecked'}
+                        onPress={() => setRequestToJoin(!requestToJoin)}
+                        color="black"
+                    />
+                    <Text style={{ fontSize: scaleSize(18) }}>New members need to request access</Text>
+                </View>
+
+                <TouchableOpacity style={globalStyles.buttons} onPress={() => setMapModalVisible(true)}>
+                    <Text style={{...globalStyles.buttonText, marginRight: scaleSize(18)}}>Set Location</Text>
+                    <Icon name="map-marker" size={scaleSize(30)} color="white"/>
+                </TouchableOpacity>
+
+                <TouchableOpacity style={globalStyles.buttons} onPress={() => setTagModalVisible(true)}>
+                    <Text style={{...globalStyles.buttonText, marginRight: scaleSize(18)}}>Set Tags</Text>
+                    <Icon name="tag" size={scaleSize(30)} color="white"/>
+                </TouchableOpacity>
+
+                <TouchableOpacity style={globalStyles.buttons} onPress={handleCreateGroup}>
+                    <Text style={{...globalStyles.buttonText, fontSize: scaleSize(22), marginRight: 0}}>Create Group</Text>
+                </TouchableOpacity>
             </View>
 
-            <TouchableOpacity style={globalStyles.buttons} onPress={() => setMapModalVisible(true)}>
-                <Text style={{...globalStyles.buttonText, marginRight: scaleSize(18)}}>Set Location</Text>
-                <Icon name="map-marker" size={scaleSize(30)} color="white"/>
-            </TouchableOpacity>
             <MapModal
                 isVisible={isMapModalVisible}
                 closeModal={() => setMapModalVisible(false)}
@@ -352,10 +363,6 @@ const CreateGroupScreen = ({ navigation }) => {
                 setMarkerLocation={setLocation}
             />
 
-            <TouchableOpacity style={globalStyles.buttons} onPress={() => setTagModalVisible(true)}>
-                <Text style={{...globalStyles.buttonText, marginRight: scaleSize(18)}}>Set Tags</Text>
-                <Icon name="tag" size={scaleSize(30)} color="white"/>
-            </TouchableOpacity>
             <TagModal
                 isVisible={isTagModalVisible}
                 closeModal={() => setTagModalVisible(false)}
@@ -365,13 +372,8 @@ const CreateGroupScreen = ({ navigation }) => {
                 tagText={tagText}
                 setTagText={setTagText}
             />
-
-            <TouchableOpacity style={globalStyles.buttons} onPress={handleCreateGroup}>
-                <Text style={{...globalStyles.buttonText, fontSize: scaleSize(22), marginRight: 0}}>Create Group</Text>
-            </TouchableOpacity>
-
-            <BackButton navigation={navigation}/>
-        </View>
+            
+        </ScrollView>
     );
 }
 
