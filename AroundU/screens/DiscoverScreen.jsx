@@ -34,7 +34,7 @@ const MarkerIcon = (props) => {
                     color="black"
                 /> :
                 <Image
-                    source={{ uri: `${CONNECTION}/static/${group._id}` }}
+                    source={{ uri: `${CONNECTION}/static/${group.groupIcon}` }}
                     style={{ width: 38, height: 38 }}
                     resizeMode="contain"
                     onError={({nativeEvent: {error}}) => {

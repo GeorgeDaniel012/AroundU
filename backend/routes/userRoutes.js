@@ -44,7 +44,7 @@ router.get('/profile/groups', verifyToken, async (req, res) => {
 
         const user = await User.findById(userId)
             .select('groups')
-            .populate('groups', 'groupName theme tags');
+            .populate('groups', 'groupName theme tags groupIcon');
         if (!user) {
             return res.status(404).json({ error: 'User not found' });
         }
@@ -89,7 +89,7 @@ router.get('/profile/groups/:userId', async (req, res) => {
 
         const user = await User.findById(userId)
             .select('groups')
-            .populate('groups', 'groupName theme tags');
+            .populate('groups', 'groupName theme tags groupIcon');
         if (!user) {
             return res.status(404).json({ error: 'User not found' });
         }
