@@ -16,6 +16,7 @@ const messageSchema = new mongoose.Schema({
     content: String, // as in text content
     attachmentType: String, // photo, video or other
     attachment: String, // uri of attachment
+    attachmentFilename: String, // name of file
     reacts: {
         type: [{
             userWhoReacted: {

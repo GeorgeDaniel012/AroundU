@@ -141,6 +141,10 @@ router.put('/update/pic', verifyToken, upload.single('userIcon'), async (req, re
         if (!req.file || !req.file.fieldname === 'userIcon') {
             return res.status(400).json({ error: 'Did not receive user icon' });
         }
+
+        // remove existing user icon from uploads
+        // before adding the new one
+        removeFileFromUploads(userProfile.userIcon);
         
         userProfile.userIcon = req.file.filename;
         await userProfile.save();

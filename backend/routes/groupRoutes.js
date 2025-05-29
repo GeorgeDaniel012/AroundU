@@ -278,6 +278,10 @@ router.put('/:groupId/pic', verifyToken, upload.single('groupIcon'), async (req,
             return res.status(400).json({ error: 'Did not receive group icon' });
         }
         
+        // remove existing group icon from uploads
+        // before adding the new one
+        removeFileFromUploads(group.groupIcon);
+
         group.groupIcon = req.file.filename;
         await group.save();
         res.status(200).json( group );
@@ -313,7 +317,7 @@ router.delete('/:groupId', verifyToken, async (req, res) => {
         }
 
         // also remove group icon from storage
-        storageHelpers.removeFileFromUploads(group.groupIcon);
+        removeFileFromUploads(group.groupIcon);
 
         await Group.findByIdAndDelete(groupId);
         res.status(200).json({ message: 'Group deleted successfully' });

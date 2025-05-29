@@ -10,6 +10,7 @@ const userRoutes = require('./routes/userRoutes');
 const groupRoutes = require('./routes/groupRoutes');
 const groupUserManagementRoutes = require('./routes/groupUserManagementRoutes');
 const fileRoutes = require('./routes/fileRoutes');
+const messageRoutes = require('./routes/messageRoutes');
 
 const app = express();
 
@@ -40,6 +41,7 @@ app.use('/user', userRoutes);
 app.use('/group', groupRoutes);
 app.use('/group', groupUserManagementRoutes);
 app.use('/file', fileRoutes);
+app.use('/message', messageRoutes);
 app.use('/static', express.static('uploads'));
 
 const PORT = process.env.PORT || 3000;
