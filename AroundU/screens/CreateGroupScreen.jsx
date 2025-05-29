@@ -120,10 +120,12 @@ const MapModal = (props) => {
                     />
                     <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center' }}>
                         <TouchableOpacity style={globalStyles.buttons} onPress={handleSetMarker}>
-                            <Text style={{...globalStyles.buttonText, marginRight: 0}}>Set Marker</Text>
+                            <Text style={{...globalStyles.buttonText, textAlign: 'center'}}>Set Coords</Text>
+                            <Icon name="edit" size={scaleSize(21)} color="white" style={{marginLeft: 10}}/>
                         </TouchableOpacity>
-                        <TouchableOpacity style={{...globalStyles.buttons}} onPress={closeModal}>
-                            <Text style={{...globalStyles.buttonText, marginRight: 0, textAlign: 'center'}}>Save Marker</Text>
+                        <TouchableOpacity style={globalStyles.buttons} onPress={closeModal}>
+                            <Text style={{...globalStyles.buttonText, textAlign: 'center'}}>Save Marker</Text>
+                            <Icon name="save" size={scaleSize(21)} color="white" style={{marginLeft: 10}}/>
                         </TouchableOpacity>
                     </View>
                 </View>
@@ -152,7 +154,7 @@ const TagModal = (props) => {
                         placeholderTextColor="grey"
                     />
                     <TouchableOpacity onPress={handleAddTag}>
-                        <Icon name="plus" size={32} color="grey"/>
+                        <Icon name="plus" size={32} color="black"/>
                     </TouchableOpacity>
                 </View>
 
@@ -198,7 +200,7 @@ const ThemeComponent = (props) => {
                 theme === themeName ?
                 <TouchableOpacity style={globalStyles.selectedTheme} onPress={handleSetTheme}>
                     <Text style={{...globalStyles.selectedThemeText, marginRight: scaleSize(16)}}>{themeName}</Text>
-                    <Icon name={iconName} size={scaleSize(21)} color={'white'}/>
+                    <Icon name={iconName} size={scaleSize(21)} color={'red'}/>
                 </TouchableOpacity> :
 
                 <TouchableOpacity style={globalStyles.unselectedTheme} onPress={handleSetTheme}>
@@ -216,7 +218,7 @@ const TagComponent = (props) => {
     return (
         <TouchableOpacity style={styles.tag} onPress={removeTag}>
             <Text style={{...globalStyles.selectedThemeText, marginRight: scaleSize(16)}}>{tagName}</Text>
-            <Icon name="minus" size={scaleSize(20)} color="white"/>
+            <Icon name="minus" size={scaleSize(20)} color="red"/>
         </TouchableOpacity>
     );
 }
@@ -343,17 +345,18 @@ const CreateGroupScreen = ({ navigation }) => {
                 </View>
 
                 <TouchableOpacity style={globalStyles.buttons} onPress={() => setMapModalVisible(true)}>
-                    <Text style={{...globalStyles.buttonText, marginRight: scaleSize(18)}}>Set Location</Text>
-                    <Icon name="map-marker" size={scaleSize(30)} color="white"/>
+                    <Text style={{...globalStyles.buttonText, marginRight: scaleSize(10)}}>Set Location</Text>
+                    <Icon name="map-marker" size={scaleSize(21)} color="white"/>
                 </TouchableOpacity>
 
                 <TouchableOpacity style={globalStyles.buttons} onPress={() => setTagModalVisible(true)}>
-                    <Text style={{...globalStyles.buttonText, marginRight: scaleSize(18)}}>Set Tags</Text>
-                    <Icon name="tag" size={scaleSize(30)} color="white"/>
+                    <Text style={{...globalStyles.buttonText, marginRight: scaleSize(10)}}>Set Tags</Text>
+                    <Icon name="tag" size={scaleSize(21)} color="white"/>
                 </TouchableOpacity>
 
                 <TouchableOpacity style={globalStyles.buttons} onPress={handleCreateGroup}>
-                    <Text style={{...globalStyles.buttonText, fontSize: scaleSize(22), marginRight: 0}}>Create Group</Text>
+                    <Text style={{...globalStyles.buttonText, fontSize: scaleSize(22), marginRight: scaleSize(10)}}>Create Group</Text>
+                    <Icon name="plus" size={scaleSize(21)} color="white"/>
                 </TouchableOpacity>
             </View>
 
@@ -385,9 +388,10 @@ const styles = StyleSheet.create({
     tag: {
         justifyContent: 'center', 
         alignItems: 'center', 
-        backgroundColor: 'black', 
+        backgroundColor: 'white', 
         padding: 10,
         borderWidth: 1, 
+        borderColor: 'red',
         borderRadius: 10,
         maxHeight: 50,
         maxWidth: 300,
@@ -418,7 +422,7 @@ const styles = StyleSheet.create({
         flex: 1,
         alignItems: 'center',
         justifyContent: 'center',
-        //borderRadius: 20
+        //borderRadius: 10
     }
 });
 

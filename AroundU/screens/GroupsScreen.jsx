@@ -99,8 +99,8 @@ const GroupsScreen = ({ navigation }) => {
                     <Text style={globalStyles.nameText}>You are not in any group.</Text>
                 </View> :
                 <ScrollView contentContainerStyle={{ justifyContent: 'center', alignItems: 'center', flexGrow: 1 }}>
-                    <View style={{ alignItems: 'center', width: scaleSize(300), gap: 20 }}>
-                        <Text style={{ fontSize: scaleSize(16), marginTop: scaleSize(12) }}>Your groups:</Text>
+                    <View style={{ alignItems: 'center', width: scaleSize(300), gap: 20, marginVertical: scaleSize(40) }}>
+                        <Text style={{ fontSize: scaleSize(16) }}>Your groups:</Text>
                         {groupsList.map((item, index) => (
                             <GroupComponent
                                 key={`${index}-${item._id}`}
@@ -125,8 +125,8 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-around',
         alignItems: 'center',
-        borderRadius: 5,
-        borderWidth: 2,
+        borderRadius: 10,
+        borderWidth: 1,
     },
     groupName: {
         color: 'black', 

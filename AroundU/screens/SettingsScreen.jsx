@@ -77,7 +77,7 @@ const ChangePasswordModal = (props) => {
                     placeholderTextColor="grey"
                     secureTextEntry
                 />
-                <TouchableOpacity style={globalStyles.buttons} onPress={handleChangePassword}>
+                <TouchableOpacity style={globalStyles.redButtons} onPress={handleChangePassword}>
                     <Text style={globalStyles.buttonText}>Change Password</Text>
                 </TouchableOpacity>
             </View>
@@ -138,7 +138,7 @@ const DeleteAccountModal = (props) => {
                     placeholderTextColor="grey"
                     secureTextEntry
                 />
-                <TouchableOpacity style={globalStyles.buttons} onPress={handleDeleteAccount}>
+                <TouchableOpacity style={globalStyles.redButtons} onPress={handleDeleteAccount}>
                     <Text style={globalStyles.buttonText}>Delete Account</Text>
                 </TouchableOpacity>
             </View>
@@ -162,7 +162,7 @@ const SettingsScreen = ({ navigation }) => {
                 <Text style={globalStyles.buttonText}>Logout</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={globalStyles.buttons} onPress={() => setIsChangePasswordModalVisible(true)}>
+            <TouchableOpacity style={globalStyles.redButtons} onPress={() => setIsChangePasswordModalVisible(true)}>
                 <Text style={globalStyles.buttonText}>Change Password</Text>
             </TouchableOpacity>
             <ChangePasswordModal
@@ -170,7 +170,7 @@ const SettingsScreen = ({ navigation }) => {
                 closeModal={() => setIsChangePasswordModalVisible(false)}
             />
 
-            <TouchableOpacity style={globalStyles.buttons} onPress={() => setIsDeleteAccountModalVisible(true)}>
+            <TouchableOpacity style={globalStyles.redButtons} onPress={() => setIsDeleteAccountModalVisible(true)}>
                 <Text style={globalStyles.buttonText}>Delete Account</Text>
             </TouchableOpacity>
             <DeleteAccountModal

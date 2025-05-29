@@ -15,9 +15,10 @@ export default StyleSheet.create({
     selectedTheme: {
         justifyContent: 'center', 
         alignItems: 'center', 
-        backgroundColor: 'black', 
+        backgroundColor: 'white', 
         padding: 10,
         borderWidth: 1, 
+        borderColor: 'red',
         borderRadius: 10,
         maxHeight: 50,
         maxWidth: 300,
@@ -25,7 +26,7 @@ export default StyleSheet.create({
         margin: 5
     },
     selectedThemeText: { 
-        color: 'white', 
+        color: 'red', 
         fontSize: scaleSize(16),
     },
     unselectedTheme: {
@@ -49,7 +50,14 @@ export default StyleSheet.create({
         alignItems: 'center',
         padding: 10,
         backgroundColor: 'black',
-        borderWidth: 1,
+        borderRadius: 10,
+        margin: scaleSize(12),
+    },
+    redButtons: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        padding: 10,
+        backgroundColor: 'red',
         borderRadius: 10,
         margin: scaleSize(12),
     },

@@ -466,7 +466,7 @@ const GroupInfo = ({ navigation, ...props }) => {
                         {/* <Text style={globalStyles.unselectedThemeText}>{groupInfo.location.coordinates}</Text> */}
                     </View>
 
-                    <View style={{ flex: 1, minHeight: getScreenHeight(1/6), alignItems: 'center', width: scaleSize(300), borderRadius: 5, borderWidth: 2 }}>
+                    <View style={{ flex: 1, minHeight: getScreenHeight(1/6), alignItems: 'center', width: scaleSize(300), borderRadius: 10, borderWidth: 1, marginTop: scaleSize(12) }}>
                         <Text style={{ fontSize: scaleSize(16), marginTop: scaleSize(12) }}>Group members:</Text>
                         {memberList.map((item, index) => (
                             <MemberInfo
@@ -564,7 +564,7 @@ const GroupInfo = ({ navigation, ...props }) => {
                 fetchInfo={fetchInfo}
             />
 
-            {permissionLevel >= 2 &&
+            {(permissionLevel >= 2 && !groupInfo.everyoneCanJoin) &&
                 <TouchableOpacity style={styles.requestsButton} onPress={() => setRequestsModalVisible(true)}>
                     <Icon size={35} name="envelope" color="white"/>
                 </TouchableOpacity>
@@ -588,8 +588,8 @@ const styles = StyleSheet.create({
         width: scaleSize(300),
         justifyContent: 'center',
         alignItems: 'center',
-        borderRadius: 5,
-        borderWidth: 2,
+        borderRadius: 10,
+        borderWidth: 1,
         alignSelf: 'flex-end'
     },
     member: {
@@ -599,15 +599,15 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-around',
         alignItems: 'center',
-        // borderRadius: 5,
+        // borderRadius: 10,
         // borderWidth: 1,
     },
     permissionLevelTag: {
         flex: 1,
         maxWidth: scaleSize(70),
         padding: scaleSize(6),
-        borderRadius: 5,
-        borderWidth: 2,
+        borderRadius: 10,
+        borderWidth: 1,
     },
     permissionLevelTagText: {
         textAlign: 'center',

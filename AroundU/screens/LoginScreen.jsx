@@ -178,7 +178,7 @@ const styles = StyleSheet.create({
 		borderWidth: 4,
 		marginBottom: scaleSize(10),
 		padding: 8,
-		borderRadius: 8,
+		borderRadius: 10,
     },
     input: {
 		//height: 40,
@@ -187,7 +187,7 @@ const styles = StyleSheet.create({
 		borderWidth: 1,
 		marginBottom: scaleSize(10),
 		padding: 8,
-		borderRadius: 4,
+		borderRadius: 10,
 	},
 });
 

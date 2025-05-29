@@ -5,6 +5,7 @@ import { scaleSize, removeLastScreenFromNavigationStack } from "../utils/helpers
 import { CONNECTION } from "../config/config";
 import BackButton from "../components/BackButton";
 import ImageCropPicker from "react-native-image-crop-picker";
+import Icon from "react-native-vector-icons/FontAwesome5";
 import globalStyles from "../styles/globalStyles";
 import axiosInstance from "../utils/axiosInstance";
 import { AuthContext } from "../contexts/AuthContext";
@@ -140,7 +141,8 @@ const EditProfile = ({ navigation, ...props }) => {
             </View>
             <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
                 <TouchableOpacity style={globalStyles.buttons} onPress={handleSaveChanges}>
-                    <Text style={{...globalStyles.buttonText, fontSize: scaleSize(22)}}>Save Changes</Text>
+                    <Text style={{...globalStyles.buttonText, fontSize: scaleSize(22), marginRight: scaleSize(10)}}>Save Changes</Text>
+                    <Icon name="save" size={scaleSize(21)} color="white"/>
                 </TouchableOpacity>
             </View>
         </View>

@@ -56,7 +56,7 @@ const ThemeComponent = (props) => {
                 themeFilter.includes(themeName) ?
                 <TouchableOpacity style={globalStyles.selectedTheme} onPress={handleSetTheme}>
                     <Text style={globalStyles.selectedThemeText}>{themeName}</Text>
-                    <Icon name={iconName} size={scaleSize(21)} color={'white'} style={{marginLeft: 10}}/>
+                    <Icon name={iconName} size={scaleSize(21)} color={'red'} style={{marginLeft: 10}}/>
                 </TouchableOpacity> :
 
                 <TouchableOpacity style={globalStyles.unselectedTheme} onPress={handleSetTheme}>
