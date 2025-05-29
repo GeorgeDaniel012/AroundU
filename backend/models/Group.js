@@ -82,8 +82,8 @@ const groupSchema = new mongoose.Schema({
         required: false,
         default: []
     },
-   // join requests may be optional in case everyone can freely join the group
-   bannedUsers: { // array of users that were banned from group, with their _id and ban time
+    // join requests may be optional in case everyone can freely join the group
+    bannedUsers: { // array of users that were banned from group, with their _id and ban time
         type: [
             {
                 user: { type: mongoose.Types.ObjectId, ref: 'User' },
