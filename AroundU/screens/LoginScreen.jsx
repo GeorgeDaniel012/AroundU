@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useState } from "react";
-import { View, Text, StyleSheet, TextInput, Button, Alert, TouchableOpacity, Image } from "react-native";
+import { View, Text, StyleSheet, TextInput, Button, Alert, TouchableOpacity, Image, KeyboardAvoidingView, Platform } from "react-native";
 import { AuthContext } from "../contexts/AuthContext";
 import axiosInstance from "../utils/axiosInstance";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -136,7 +136,7 @@ const LoginScreen = ({ navigation }) => {
     }
 
     return (
-        <View style={styles.container}>
+        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.container}>
             <Image style={styles.logo} source={require('../assets/images/AroundU-Icon.png')}/>
             {isLogin ?
                 <LoginContainer
@@ -159,7 +159,7 @@ const LoginScreen = ({ navigation }) => {
             <TouchableOpacity onPress={isLoginSwitch}>
                 <Text style={{ fontSize: scaleSize(18), textDecorationLine: 'underline' }}>{isLogin ? "Make an account instead?" : "Log in using existing account instead?"}</Text>
             </TouchableOpacity>
-        </View>
+        </KeyboardAvoidingView>
     );
 }
 

@@ -11,8 +11,6 @@ const GroupComponent = ({ navigation, ...props }) => {
     const [imageError, setImageError] = useState(false);
     const { group } = props;
 
-    useEffect(() => {console.log(props); console.log(navigation)}, []);
-
     return (
         <TouchableOpacity
             style={styles.group}
@@ -76,9 +74,9 @@ const GroupsScreen = ({ navigation }) => {
         }
     }
 
-    useEffect(() => {
-        fetchGroups();
-    }, []);
+    // useEffect(() => {
+    //     fetchGroups();
+    // }, []);
 
     // fetching groups every time this screen is in focus
     useFocusEffect(

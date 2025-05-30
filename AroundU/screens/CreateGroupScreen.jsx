@@ -12,10 +12,10 @@ import globalStyles from "../styles/globalStyles";
 const MapModal = (props) => {
     const { closeModal, isVisible, markerLocation, setMarkerLocation } = props;
     const [region, setRegion] = useState({
-        latitude: 45.434169,
-        longitude: 28.019074,
-        latitudeDelta: 0.066345,
-        longitudeDelta: 0.045896,
+        latitude: markerLocation.latitude,
+        longitude: markerLocation.longitude,
+        latitudeDelta: 0.005,
+        longitudeDelta: 0.005,
     });
     const [latitudeText, setLatitudeText] = useState('');
     const [longitudeText, setLongitudeText] = useState('');
@@ -84,12 +84,8 @@ const MapModal = (props) => {
                 <MapView
                     key={isVisible ? 'map-visible' : 'map-hidden'}
                     style={styles.map}
-                    initialRegion={{
-                        latitude: markerLocation.latitude,
-                        longitude: markerLocation.longitude,
-                        latitudeDelta: 0.066345,
-                        longitudeDelta: 0.045896,
-                    }}
+                    //initialRegion={region}
+                    region={region}
                     onRegionChangeComplete={onRegionChange}
                     toolbarEnabled={false}
                     onMarkerDragEnd={onDragEnd}
@@ -223,17 +219,16 @@ const TagComponent = (props) => {
     );
 }
 
-const CreateGroupScreen = ({ navigation }) => {
+const CreateGroupScreen = ({ navigation, ...props }) => {
+    const { currentLocation } = props.route.params;
     const [groupName, setGroupName] = useState('');
     const [theme, setTheme] = useState('');
     const [description, setDescription] = useState('');
     const [requestToJoin, setRequestToJoin] = useState(true);
     const [tags, setTags] = useState([]);
     const [tagText, setTagText] = useState('');
-    const [location, setLocation] = useState({
-        latitude: 45.434169,
-        longitude: 28.019074,
-    });
+    const [location, setLocation] = useState(currentLocation);
+    const [hasSetLocation, setHasSetLocation] = useState(false);
     const [isMapModalVisible, setMapModalVisible] = useState(false);
     const [isTagModalVisible, setTagModalVisible] = useState(false);
     const { accessToken } = useContext(AuthContext);
@@ -258,7 +253,7 @@ const CreateGroupScreen = ({ navigation }) => {
 
     const handleCreateGroup = async () => {
         try {
-            if (!groupName || !theme || !description) {
+            if (!groupName || !theme || !description || !hasSetLocation) {
                 console.log('Not all required fields are filled out');
                 Alert.alert('Error', 'Not all required fields are filled out');
                 return;
@@ -291,7 +286,8 @@ const CreateGroupScreen = ({ navigation }) => {
             if (res.status === 201) {
                 console.log('Group created');
                 Alert.alert('Success', 'Group created');
-                removeLastScreenFromNavigationStack(navigation);
+                //removeLastScreenFromNavigationStack(navigation);
+                navigation.goBack();
             }
         } catch (err) {
             console.error('Error creating group:', err);
@@ -300,7 +296,7 @@ const CreateGroupScreen = ({ navigation }) => {
     }
 
     return (
-        <ScrollView contentContainerStyle={{ justifyContent: 'center', alignItems: 'center' }}>
+        <ScrollView keyboardShouldPersistTaps={"always"} contentContainerStyle={{ justifyContent: 'center', alignItems: 'center' }}>
             <BackButton navigation={navigation}/>
             <View style={{ justifyContent: 'center', alignItems: 'center', marginTop: 60 }}>
                 <TextInput
@@ -344,8 +340,8 @@ const CreateGroupScreen = ({ navigation }) => {
                     <Text style={{ fontSize: scaleSize(18) }}>New members need to request access</Text>
                 </View>
 
-                <TouchableOpacity style={globalStyles.buttons} onPress={() => setMapModalVisible(true)}>
-                    <Text style={{...globalStyles.buttonText, marginRight: scaleSize(10)}}>Set Location</Text>
+                <TouchableOpacity style={globalStyles.buttons} onPress={() => {setMapModalVisible(true); setHasSetLocation(true)}}>
+                    <Text style={{...globalStyles.buttonText, marginRight: scaleSize(10)}}>Set Location (required)</Text>
                     <Icon name="map-marker" size={scaleSize(21)} color="white"/>
                 </TouchableOpacity>
 

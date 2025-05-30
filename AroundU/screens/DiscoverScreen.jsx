@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { StyleSheet, View, Text, Platform, PermissionsAndroid, Button, TouchableOpacity, Image, Alert, Modal, TouchableWithoutFeedback, FlatList } from 'react-native';
 import { Checkbox } from 'react-native-paper';
 import MapView, { Callout, Marker } from 'react-native-maps';
@@ -8,6 +8,7 @@ import Icon from "react-native-vector-icons/FontAwesome5";
 import { distanceBetweenPoints, scaleSize, themeList, getIconForTheme } from '../utils/helpers';
 import { CONNECTION } from '../config/config';
 import globalStyles from '../styles/globalStyles';
+import { useFocusEffect } from '@react-navigation/native';
 
 const MarkerIcon = (props) => {
     const { group } = props;
@@ -262,6 +263,13 @@ const DiscoverScreen = ({ navigation }) => {
         else hasObtainedCurrentLocation.current = true;
     }, [currentLocation]);
 
+    // fetching groups every time this screen is in focus
+    useFocusEffect(
+        useCallback(() => {
+            fetchGroups();
+        })
+    );
+
     const getCurrentLocation = async () => {
         try {
             Geolocation.getCurrentPosition(
@@ -389,7 +397,7 @@ const DiscoverScreen = ({ navigation }) => {
                     <TouchableOpacity style={styles.refreshButton} onPress={fetchGroups}>
                         <Icon name="sync" size={scaleSize(30)} color="grey"/>
                     </TouchableOpacity>
-                    <TouchableOpacity style={styles.createButton} onPress={() => navigation.navigate("CreateGroup")}>
+                    <TouchableOpacity style={styles.createButton} onPress={() => navigation.navigate("CreateGroup", { currentLocation: currentLocation })}>
                         <Icon name="plus" size={scaleSize(30)} color="grey"/>
                     </TouchableOpacity>
                 </>

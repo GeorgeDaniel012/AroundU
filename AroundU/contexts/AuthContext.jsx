@@ -47,6 +47,7 @@ export const AuthProvider = ({ children }) => {
             if (res.status === 200) {
                 Alert.alert('Success', 'You are now logged in!');
                 console.log('cookie', getCookie(res, 'refreshToken'));
+                setAccessToken(res.data.token);
                 await AsyncStorage.setItem('refreshToken', getCookie(res, 'refreshToken'));
                 await AsyncStorage.setItem('currentUserId', getCookie(res, 'currentUserId'));
             }

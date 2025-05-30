@@ -380,7 +380,8 @@ const EditGroupScreen = ({ navigation, ...props }) => {
             //     })
             // );
 
-            removeLastScreenFromNavigationStack(navigation);
+            //removeLastScreenFromNavigationStack(navigation);
+            navigation.goBack();
         } catch (err) {
             console.error('Error updating group:', err);
             Alert.alert('Error', 'Failed to update group');
@@ -390,7 +391,7 @@ const EditGroupScreen = ({ navigation, ...props }) => {
     useEffect(() => console.log(groupInfo), []);
 
     return (
-        <ScrollView contentContainerStyle={{ justifyContent: 'center', alignItems: 'center' }}>
+        <ScrollView keyboardShouldPersistTaps={"always"} contentContainerStyle={{ justifyContent: 'center', alignItems: 'center' }}>
             <BackButton navigation={navigation}/>
 
             <TouchableOpacity style={styles.bannedUsersButton} onPress={() => setBannedUsersModalVisible(true)}>
