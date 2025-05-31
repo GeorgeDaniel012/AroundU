@@ -19,7 +19,7 @@ const Stack = createNativeStackNavigator();
 const wrapInSafeAreaView = (Component) => {
     return function WrappedComponent(props) {
         return (
-            <SafeAreaView style={{ flex: 1 }}>
+            <SafeAreaView style={{ flex: 1, backgroundColor: 'white' }}>
                 <Component {...props}/>
             </SafeAreaView>
         )

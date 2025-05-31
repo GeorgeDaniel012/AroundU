@@ -261,7 +261,7 @@ const DiscoverScreen = ({ navigation }) => {
     useFocusEffect(
         useCallback(() => {
             if (hasObtainedCurrentLocation.current) fetchGroups();
-        })
+        }, [])
     );
 
     useEffect(() => {

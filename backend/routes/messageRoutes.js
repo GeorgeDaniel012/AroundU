@@ -123,7 +123,9 @@ router.delete('/:messageId', verifyToken, async (req, res) => {
         }
         
         // user needs to be moderator or higher to delete messages
-        const hasPermission = group.members.some(member => member.member.equals(userId) && member.permission >= 1);
+        const isModOrHigher = group.members.some(member => member.member.equals(userId) && member.permission >= 1);
+        // or needs to have sent the message
+        const hasPermission = isModOrHigher || message.sender === userId;
         if (!hasPermission) {
             return res.status(403).json({ error: 'Not allowed' });
         }

@@ -1,20 +1,48 @@
-import { useNavigation } from "@react-navigation/native";
-import React, { useContext, useEffect, useState } from "react";
-import { View, Text, Button, StyleSheet, StatusBar, TouchableOpacity, TextInput, KeyboardAvoidingView, Platform, ScrollView } from "react-native";
+import React, { useContext, useEffect, useRef, useState } from "react";
+import { View, Text, Button, StyleSheet, StatusBar, TouchableOpacity, TextInput, KeyboardAvoidingView, Platform, ScrollView, FlatList, Image, Linking, Alert } from "react-native";
 import BackButton from "../components/BackButton";
 import { getScreenHeight, scaleSize } from "../utils/helpers";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import globalStyles from "../styles/globalStyles";
 import axiosInstance from "../utils/axiosInstance";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { AuthContext } from "../contexts/AuthContext";
+import { CONNECTION } from '../config/config';
+import Video from "react-native-video";
+import Icon from "react-native-vector-icons/FontAwesome5";
 
 const MessageComponent = (props) => {
-    const { message } = props;
+    const { message, currentUserId } = props;
 
     return (
-        <View style={styles.message}>
-            <Text>{message.content}</Text>
-        </View>
+        <TouchableOpacity style={currentUserId === message.sender ? styles.messageSent : styles.messageReceived}>
+            {message.attachment && 
+                (message.attachmentType === 'image' ?
+                    <Image
+                        source={{ uri: `${CONNECTION}/static/${message.attachment}`, cache: 'reload' }}
+                        style={{ width: scaleSize(200), height: scaleSize(200) }}
+                        resizeMode="contain"
+                    /> : 
+                    message.attachmentType === 'video' ?
+                    <Video
+                        source={{ uri: `${CONNECTION}/static/${message.attachment}`, cache: 'reload' }}
+                        style={{ width: scaleSize(200), height: scaleSize(200) }}
+                        controls
+                        resizeMode="contain"
+                        paused
+                    /> :
+                    // this is any other file
+                    <TouchableOpacity onPress={() => Linking.openURL(`${CONNECTION}/static/${message.attachment}`)}>
+                        <View style={{ paddingVertical: scaleSize(5), flexDirection: 'row', gap: scaleSize(10) }}>
+                            <Icon name="file-download" size={scaleSize(16)} color="black"/>
+                            <Text style={{ fontSize: scaleSize(16), textDecorationLine: 'underline' }}>{message.attachmentFilename}</Text>
+                        </View>
+                    </TouchableOpacity>
+                )
+            }
+
+            {message.content.length !== 0 && <Text style={styles.messageContent}>{message.content}</Text>}
+        </TouchableOpacity>
     );
 }
 
@@ -23,10 +51,19 @@ const MessagesScreen = ({ navigation, ...props }) => {
     const { _id: groupId, groupName } = groupInfo; // needing just id and name
     const [messageField, setMessageField] = useState('');
     const [messagesList, setMessagesList] = useState([]);
+    const [attachment, setAttachment] = useState(null);
+
+    const [currentUserId, setCurrentUserId] = useState('');
     const { accessToken } = useContext(AuthContext);
+
+    const insets = useSafeAreaInsets();
+    const listRef = useRef(null);
 
     const fetchMessages = async () => {
         try {
+            const userId = await AsyncStorage.getItem('currentUserId');
+            setCurrentUserId(userId);
+
             const res = await axiosInstance.get(`message/${groupId}`, {
                 headers: {
                     'Authorization': `Bearer ${accessToken}`,
@@ -43,6 +80,9 @@ const MessagesScreen = ({ navigation, ...props }) => {
 
             if (res.status === 200) {
                 setMessagesList(res.data);
+                //listRef.current.scrollToEnd({ animated: false });
+
+                // emit message through socket here!
             }
         } catch (err) {
             console.error('Error fetching messages:', err);
@@ -52,11 +92,49 @@ const MessagesScreen = ({ navigation, ...props }) => {
 
     useEffect(() => {
         fetchMessages();
-
-        console.log(messagesList);
     }, []);
 
-    const insets = useSafeAreaInsets();
+    useEffect(() => {
+        if (listRef.current && messagesList.length > 0) {
+            // using setTimeout to delay the scroll until after rendering
+            setTimeout(() => {
+                listRef.current.scrollToIndex({ index: messagesList.length - 1, animated: false });
+            }, 100);
+        }
+    }, [messagesList]);
+
+    const handleSendMessage = async () => {
+        try {
+            if (!messageField) {
+                return;
+            }
+
+            const res = await axiosInstance.post(`/message/${groupId}`, {
+                content: messageField
+            }, {
+                headers: {
+                    'Authorization': `Bearer ${accessToken}`
+                },
+                validateStatus: status => status < 500, // throw error if status is at least 500
+            });
+
+            if (res.status >= 400 ) {
+                const errorMessage = res.data.error;
+                console.log(errorMessage);
+                Alert.alert('Error', errorMessage);
+            }
+
+            if (res.status === 201) {
+                setMessageField('');
+                setTimeout(() => {
+                    listRef.current.scrollToIndex({ index: messagesList.length - 1, animated: false });
+                }, 100);
+            }
+        } catch (err) {
+            console.error('Error creating group:', err);
+            Alert.alert('Error', 'Failed to create group');
+        }
+    }
 
     return (
         <KeyboardAvoidingView behavior={'height'} keyboardVerticalOffset={-insets.bottom + 20} style={{ flex: 1, alignItems: 'center' }}>
@@ -72,20 +150,35 @@ const MessagesScreen = ({ navigation, ...props }) => {
                     <Text style={{fontSize: scaleSize(28), color: 'white'}}>{groupName.substring(0, 21)}{groupName.length > 21 && "..."}</Text>
                 </TouchableOpacity> */}
 
-                <Text style={{fontSize: scaleSize(28), color: 'white', paddingTop: scaleSize(6)}}>
+                <Text style={{fontSize: scaleSize(28), paddingTop: scaleSize(6)}}>
                     {groupName.substring(0, 21)}
                     {groupName.length > 21 && "..."}
                 </Text>
             </View>
 
-            <ScrollView contentContainerStyle={styles.messagesContainer}>
+            {/* <ScrollView contentContainerStyle={styles.messagesContainer}>
                 {messagesList.map((message, index) =>
                     <MessageComponent
                         key={`${message._id}-${index}`}
                         message={message}
                     />
                 )}
-            </ScrollView>
+            </ScrollView> */}
+
+            <FlatList
+                ref={listRef}
+                data={messagesList}
+                renderItem={(item) => <MessageComponent message={item.item} currentUserId={currentUserId}/>}
+                keyExtractor={(item, index) => `${item._id}-${index}`}
+                contentContainerStyle={styles.messagesContainer}
+                getItemLayout={(data, index) => ({
+                    length: 100,
+                    offset: 100 * index,
+                    index,
+                })}
+                initialNumToRender={10}
+                windowSize={10}
+            />
 
             <View style={styles.inputContainer}>
                 <TextInput
@@ -95,7 +188,7 @@ const MessagesScreen = ({ navigation, ...props }) => {
                     placeholder="Type a message..."
                     placeholderTextColor="grey"
                 />
-                <TouchableOpacity style={styles.sendButton}>
+                <TouchableOpacity style={styles.sendButton} onPress={handleSendMessage}>
                     <Text style={styles.sendButtonText}>Send</Text>
                 </TouchableOpacity>
             </View>
@@ -105,35 +198,72 @@ const MessagesScreen = ({ navigation, ...props }) => {
 
 const styles = StyleSheet.create({
     header: {
-        minHeight: getScreenHeight(1/13),
+        height: getScreenHeight(1/13),
         justifyContent: 'flex-start',
         alignItems: 'center',
         flexDirection: 'row',
-        width: scaleSize(375),
-        borderWidth: 1,
-        backgroundColor: 'black',
+        width: '100%',
+        backgroundColor: 'white',
+        borderBottomWidth: 1,
+        borderColor: 'grey',
         paddingBottom: 6
     },
     messagesContainer: {
-        minHeight: getScreenHeight(11/13),
-        justifyContent: 'center',
-        gap: 20
+        // maxHeight: getScreenHeight(11/13),
+        justifyContent: 'flex-end',
+        width: scaleSize(360),
+        padding: scaleSize(10),
+        gap: 10,
+        flexGrow: 1,
     },
-    message: {
-        height: scaleSize(50),
-        width: 150,
+    messageReceived: {
+        minHeight: scaleSize(50),
+        minWidth: scaleSize(50),
         backgroundColor: 'tomato',
         borderRadius: 10,
+        padding: scaleSize(10),
+        justifyContent: 'center',
+        alignItems: 'flex-start',
+        alignSelf: 'flex-start',
+        // shadowColor: "#000",
+        // shadowOffset: {
+        //     width: 0,
+        //     height: 4,
+        // },
+        // shadowOpacity: 0.32,
+        // shadowRadius: 10,
+        // elevation: 4,
+    },
+    messageSent: {
+        minHeight: scaleSize(50),
+        minWidth: scaleSize(50),
+        backgroundColor: 'dodgerblue',
+        borderRadius: 10,
+        padding: scaleSize(10),
         justifyContent: 'center',
         alignItems: 'center',
+        alignSelf: 'flex-end',
+        // shadowColor: "#000",
+        // shadowOffset: {
+        //     width: 0,
+        //     height: 2,
+        // },
+        // shadowOpacity: 0.25,
+        // shadowRadius: 3.84,
+        // elevation: 4,
+    },
+    messageContent: {
+        fontSize: scaleSize(16),
     },
     inputContainer: {
-        minHeight: getScreenHeight(1/13),
+        height: getScreenHeight(1/13),
+        width: '100%',
         justifyContent: 'center',
         alignItems: 'center',
         flexDirection: 'row',
-        position: 'absolute',
-        bottom: 0
+        backgroundColor: 'white',
+        borderTopWidth: 1,
+        borderColor: 'grey',
     },
     messageInput: {
         ...globalStyles.input,
@@ -141,7 +271,7 @@ const styles = StyleSheet.create({
     },
     sendButton: {
         width: scaleSize(60),
-        backgroundColor: 'tomato',
+        backgroundColor: 'dodgerblue',
         padding: 10,
         justifyContent: 'center',
         alignItems: 'center',
@@ -149,7 +279,7 @@ const styles = StyleSheet.create({
         marginRight: scaleSize(12),
         height: scaleSize(44),
         fontSize: scaleSize(16),
-        fontWeight: 'bold'
+        fontWeight: 'bold',
     },
     sendButtonText: {
         fontSize: scaleSize(16),

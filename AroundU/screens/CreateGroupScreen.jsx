@@ -275,8 +275,6 @@ const CreateGroupScreen = ({ navigation, ...props }) => {
                 validateStatus: status => status < 500, // throw error if status is at least 500
             });
 
-            console.log(res);
-
             if (res.status >= 400 ) {
                 const errorMessage = res.data.error;
                 console.log(errorMessage);

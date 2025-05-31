@@ -81,7 +81,7 @@ const GroupsScreen = ({ navigation }) => {
     useFocusEffect(
         useCallback(() => {
             fetchGroups();
-        })
+        }, []),
     );
 
     return (
