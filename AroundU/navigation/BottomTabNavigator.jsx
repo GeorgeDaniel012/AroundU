@@ -9,8 +9,11 @@ import DiscoverScreen from "../screens/DiscoverScreen";
 import GroupsScreen from "../screens/GroupsScreen";
 import SettingsScreen from "../screens/SettingsScreen";
 import { scaleSize } from "../utils/helpers";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const Tabs = () => {
+    const insets = useSafeAreaInsets();
+
     return (
         <Tab.Navigator
             initialRouteName = "Home"
@@ -35,7 +38,7 @@ const Tabs = () => {
                 tabBarActiveTintColor: "tomato",
                 tabBarInactiveTintColor: "gray",
                 tabBarLabelStyle: { fontSize: scaleSize(16) },
-                tabBarStyle: { height: scaleSize(60), paddingTop: scaleSize(4), paddingBottom: scaleSize(4) } // base height = 80 (scale(73))
+                tabBarStyle: { height: scaleSize(60) + insets.bottom, paddingBottom: insets.bottom, paddingTop: scaleSize(3) } // base height = 80 (scale(73))
             })}
         >
             <Tab.Screen name="Home" component={HomeScreen} />

@@ -1,6 +1,7 @@
 import React from "react";
 import { StyleSheet, TouchableOpacity } from "react-native";
 import Icon from "react-native-vector-icons/FontAwesome5";
+import { scaleSize } from "../utils/helpers";
 
 const BackButton = ({ navigation, ...props }) => {
     const { onPress } = props;
@@ -13,7 +14,7 @@ const BackButton = ({ navigation, ...props }) => {
             onPress :
             () => navigation.goBack()
         }>
-            <Icon name="chevron-left" size={40} color="grey"/>
+            <Icon name="chevron-left" size={scaleSize(30)} color="grey"/>
         </TouchableOpacity>
     );
 }
@@ -21,8 +22,8 @@ const BackButton = ({ navigation, ...props }) => {
 const styles = StyleSheet.create({
     backButton: {
         position: 'absolute',
-        top: 20,
-        left: 20
+        top: scaleSize(15),
+        left: scaleSize(15)
     }
 });
 

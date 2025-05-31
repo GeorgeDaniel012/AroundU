@@ -116,7 +116,6 @@ const EditProfile = ({ navigation, ...props }) => {
                         style={{ width: scaleSize(140), height: scaleSize(140), borderRadius: 100 }}
                         resizeMode="contain"
                         onError={({nativeEvent: {error}}) => {
-                            console.log("err", error);
                             setImageError(true);
                         }}
                     />

@@ -10,8 +10,18 @@ const { removeFileFromUploads } = require('../utils/storageHelpers');
 const router = express.Router();
 
 // get all messages for a group
-router.get('/:groupId', async (req, res) => {
+router.get('/:groupId', verifyToken, async (req, res) => {
     try {
+        // user needs to be logged in to send a message
+        const userId = req.userId;
+        if (!userId) {
+            return res.status(403).json({ error: 'Unauthorized' });
+        }
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
         const groupId = req.params.groupId;
         if (!groupId) {
             return res.status(400).json({ error: 'Group ID is required' });
@@ -19,6 +29,12 @@ router.get('/:groupId', async (req, res) => {
         const group = await Group.findById(groupId);
         if (!group) {
             return res.status(404).json({ error: 'Group not found' });
+        }
+
+        // a user needs to be in a group to be able to read messages from that group
+        const userInGroup = group.members.find(member => member.member.equals(userId));
+        if (!userInGroup) {
+            return res.status(400).json({ error: 'User not in group' });
         }
         
         const messages = await Message.find({ group: groupId });

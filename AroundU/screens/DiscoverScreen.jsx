@@ -39,7 +39,6 @@ const MarkerIcon = (props) => {
                     style={{ width: 38, height: 38 }}
                     resizeMode="contain"
                     onError={({nativeEvent: {error}}) => {
-                        console.log("err", error);
                         setImageError(true);
                     }}
                 />
@@ -258,17 +257,17 @@ const DiscoverScreen = ({ navigation }) => {
         setMapKey(prev => prev + 1);
     }, [locationGranted]);
 
+    // fetching groups every time this screen is in focus
+    useFocusEffect(
+        useCallback(() => {
+            if (hasObtainedCurrentLocation.current) fetchGroups();
+        })
+    );
+
     useEffect(() => {
         if (hasObtainedCurrentLocation.current) fetchGroups();
         else hasObtainedCurrentLocation.current = true;
     }, [currentLocation]);
-
-    // fetching groups every time this screen is in focus
-    useFocusEffect(
-        useCallback(() => {
-            fetchGroups();
-        })
-    );
 
     const getCurrentLocation = async () => {
         try {

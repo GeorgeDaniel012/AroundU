@@ -10,6 +10,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { CommonActions } from '@react-navigation/native';
 import { AuthContext } from '../contexts/AuthContext';
 import ReviewRequestsModal from '../components/ReviewRequestsModal';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const permissionLevelsList = [
     {
@@ -69,7 +70,6 @@ const MemberInfo = ({ navigation, ...props }) => {
                         style={{ width: scaleSize(30), height: scaleSize(30), borderRadius: 50 }}
                         resizeMode="contain"
                         onError={({nativeEvent: {error}}) => {
-                            console.log("err", error);
                             setImageError(true);
                         }}
                     />
@@ -442,7 +442,6 @@ const GroupInfo = ({ navigation, ...props }) => {
                                 style={{ width: scaleSize(140), height: scaleSize(140), borderRadius: 100 }}
                                 resizeMode="contain"
                                 onError={({nativeEvent: {error}}) => {
-                                    console.log("err", error);
                                     setImageError(true);
                                 }}
                             />
@@ -508,6 +507,17 @@ const GroupInfo = ({ navigation, ...props }) => {
                             <Icon name="map-marker" size={scaleSize(21)} color='white' style={{marginLeft: 10}}/>
                         </TouchableOpacity>
 
+                        {
+                            userInGroup &&
+                            <TouchableOpacity 
+                                style={globalStyles.buttons} 
+                                onPress={() => navigation.navigate('MessagesScreen', { groupInfo: groupInfo })}
+                            >
+                                <Text style={{...globalStyles.buttonText, fontSize: scaleSize(22)}}>Chat</Text>
+                                <Icon name="pen" size={scaleSize(21)} color='white' style={{marginLeft: 10}}/>
+                            </TouchableOpacity>
+                        }
+
                         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                             {   
                                 // only admins and the owner can edit the group
@@ -566,7 +576,7 @@ const GroupInfo = ({ navigation, ...props }) => {
 
             {(permissionLevel >= 2 && !groupInfo.everyoneCanJoin) &&
                 <TouchableOpacity style={styles.requestsButton} onPress={() => setRequestsModalVisible(true)}>
-                    <Icon size={35} name="envelope" color="white"/>
+                    <Icon size={scaleSize(30)} name="envelope" color="white"/>
                 </TouchableOpacity>
             }
 
@@ -632,8 +642,8 @@ const styles = StyleSheet.create({
     },
     requestsButton: {
         position: 'absolute',
-        top: 20,
-        right: 20,
+        top: scaleSize(15),
+        right: scaleSize(15),
         backgroundColor: 'black',
         borderRadius: 10,
         padding: 3

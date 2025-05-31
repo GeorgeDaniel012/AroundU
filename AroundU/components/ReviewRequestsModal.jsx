@@ -68,7 +68,6 @@ const Request = ({navigation, ...props}) => {
                         style={{ width: scaleSize(30), height: scaleSize(30), borderRadius: 50 }}
                         resizeMode="contain"
                         onError={({nativeEvent: {error}}) => {
-                            console.log("err", error);
                             setImageError(true);
                         }}
                     />

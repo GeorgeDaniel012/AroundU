@@ -29,7 +29,6 @@ const GroupComponent = ({ navigation, ...props }) => {
                         style={{ width: scaleSize(50), height: scaleSize(50), borderRadius: 50 }}
                         resizeMode="contain"
                         onError={({nativeEvent: {error}}) => {
-                            console.log("err", error);
                             setImageError(true);
                         }}
                     />

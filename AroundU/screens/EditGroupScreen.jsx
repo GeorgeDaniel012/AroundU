@@ -12,6 +12,7 @@ import ImageCropPicker from "react-native-image-crop-picker";
 import globalStyles from "../styles/globalStyles";
 import { CONNECTION } from "../config/config";
 import BannedUsersModal from "../components/BannedUsersModal";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 const MapModal = (props) => {
     const { closeModal, isVisible, markerLocation, setMarkerLocation, setLocationChanged } = props;
@@ -388,14 +389,12 @@ const EditGroupScreen = ({ navigation, ...props }) => {
         }
     }
 
-    useEffect(() => console.log(groupInfo), []);
-
     return (
         <ScrollView keyboardShouldPersistTaps={"always"} contentContainerStyle={{ justifyContent: 'center', alignItems: 'center' }}>
             <BackButton navigation={navigation}/>
 
             <TouchableOpacity style={styles.bannedUsersButton} onPress={() => setBannedUsersModalVisible(true)}>
-                <Icon size={35} name="user-slash" color="white"/>
+                <Icon size={scaleSize(30)} name="user-slash" color="white"/>
             </TouchableOpacity>
 
             <View style={{ justifyContent: 'center', alignItems: 'center', marginTop: 20 }}>
@@ -412,7 +411,6 @@ const EditGroupScreen = ({ navigation, ...props }) => {
                             style={{ width: scaleSize(140), height: scaleSize(140), borderRadius: 100 }}
                             resizeMode="contain"
                             onError={({nativeEvent: {error}}) => {
-                                console.log("err", error);
                                 setImageError(true);
                             }}
                         />
@@ -550,11 +548,11 @@ const styles = StyleSheet.create({
     },
     bannedUsersButton: {
         position: 'absolute',
-        top: 20,
-        right: 20,
+        top: scaleSize(15),
+        right: scaleSize(15),
         backgroundColor: 'black',
         borderRadius: 10,
-        padding: 3
+        paddingVertical: 3
     }
 });
 
