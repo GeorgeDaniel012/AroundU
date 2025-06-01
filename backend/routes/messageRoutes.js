@@ -37,7 +37,21 @@ router.get('/:groupId', verifyToken, async (req, res) => {
             return res.status(400).json({ error: 'User not in group' });
         }
         
-        const messages = await Message.find({ group: groupId });
+        const messages = await Message.find({ group: groupId })
+            // using lean docs in order to make query faster
+            // (lean docs don't return mongoose docs but js objects instead)
+            .lean()
+            // getting username for message sender
+            .populate({ 
+                path: 'sender', 
+                select: 'username',
+                // and their userIcon + displayName through the userProfile virtual field
+                populate: {
+                    path: 'userProfile',
+                    select: '-userId -_id userIcon displayName'
+                }
+            });
+
         return res.status(200).json(messages);
     } catch (err) {
         res.status(500).json({ error: err.message });

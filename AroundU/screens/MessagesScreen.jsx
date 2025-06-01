@@ -10,39 +10,87 @@ import { AuthContext } from "../contexts/AuthContext";
 import { CONNECTION } from '../config/config';
 import Video from "react-native-video";
 import Icon from "react-native-vector-icons/FontAwesome5";
+import { pick } from "@react-native-documents/picker";
 
-const MessageComponent = (props) => {
+// const AttachmentPreviewComponent = (props) => {
+//     const {  } = props;
+// }
+
+const MessageComponent = ({navigation, ...props}) => {
     const { message, currentUserId } = props;
+    const [imageError, setImageError] = useState(false);
+
+    const formattedTimestamp = new Intl.DateTimeFormat('en-US', {
+        year: 'numeric', month: '2-digit', day: '2-digit',
+        hour: '2-digit', minute: '2-digit'
+    }).format(new Date(message.createdAt));
+
+    const currentUserIsSender = currentUserId === message.sender._id;
 
     return (
-        <TouchableOpacity style={currentUserId === message.sender ? styles.messageSent : styles.messageReceived}>
-            {message.attachment && 
-                (message.attachmentType === 'image' ?
-                    <Image
-                        source={{ uri: `${CONNECTION}/static/${message.attachment}`, cache: 'reload' }}
-                        style={{ width: scaleSize(200), height: scaleSize(200) }}
-                        resizeMode="contain"
-                    /> : 
-                    message.attachmentType === 'video' ?
-                    <Video
-                        source={{ uri: `${CONNECTION}/static/${message.attachment}`, cache: 'reload' }}
-                        style={{ width: scaleSize(200), height: scaleSize(200) }}
-                        controls
-                        resizeMode="contain"
-                        paused
-                    /> :
-                    // this is any other file
-                    <TouchableOpacity onPress={() => Linking.openURL(`${CONNECTION}/static/${message.attachment}`)}>
-                        <View style={{ paddingVertical: scaleSize(5), flexDirection: 'row', gap: scaleSize(10) }}>
-                            <Icon name="file-download" size={scaleSize(16)} color="black"/>
-                            <Text style={{ fontSize: scaleSize(16), textDecorationLine: 'underline' }}>{message.attachmentFilename}</Text>
-                        </View>
+        <View>
+            <View style={{ flex: 1, flexDirection: 'row', gap: 10, alignItems: 'center',
+                alignSelf: currentUserIsSender ? 'flex-end' : 'flex-start'
+            }}>
+                {!currentUserIsSender &&
+                    <TouchableOpacity
+                        style={{ alignSelf: 'flex-end', paddingBottom: scaleSize(6) }}
+                        onPress={() => navigation.navigate("ProfileScreen", { userId: message.sender._id })}
+                    >
+                        {imageError ?
+                            <Image
+                                source={ require('../assets/images/missing_user_icon.png') }
+                                style={{ width: scaleSize(30), height: scaleSize(30), borderRadius: 50 }}
+                                resizeMode="contain"
+                            /> :
+                            <Image
+                                source={{ uri: `${CONNECTION}/static/${message.sender.userProfile.userIcon}`, cache: 'reload' }}
+                                style={{ width: scaleSize(30), height: scaleSize(30), borderRadius: 50 }}
+                                resizeMode="contain"
+                                onError={({nativeEvent: {error}}) => {
+                                    setImageError(true);
+                                }}
+                            />
+                        }
                     </TouchableOpacity>
-                )
-            }
+                }
+                <TouchableOpacity style={currentUserIsSender ? styles.messageSent : styles.messageReceived}>
+                    {!currentUserIsSender &&
+                        <Text style={styles.senderDisplayName}>{message.sender.userProfile.displayName}</Text>
+                    }
+                    {message.attachment && 
+                        (message.attachmentType.startsWith('image') ?
+                            <Image
+                                source={{ uri: `${CONNECTION}/static/${message.attachment}`, cache: 'reload' }}
+                                style={{ width: scaleSize(200), height: scaleSize(200) }}
+                                resizeMode="contain"
+                            /> : 
+                            message.attachmentType.startsWith('video') ?
+                            <Video
+                                source={{ uri: `${CONNECTION}/static/${message.attachment}`, cache: 'reload' }}
+                                style={{ width: scaleSize(200), height: scaleSize(200) }}
+                                controls
+                                resizeMode="contain"
+                                paused
+                            /> :
+                            // this is any other file
+                            <TouchableOpacity onPress={() => Linking.openURL(`${CONNECTION}/static/${message.attachment}`)}>
+                                <View style={{ paddingVertical: scaleSize(5), flexDirection: 'row', gap: scaleSize(10) }}>
+                                    <Icon name="file-download" size={scaleSize(16)} color="black"/>
+                                    <Text style={{ fontSize: scaleSize(16), textDecorationLine: 'underline' }}>{message.attachmentFilename}</Text>
+                                </View>
+                            </TouchableOpacity>
+                        )
+                    }
 
-            {message.content.length !== 0 && <Text style={styles.messageContent}>{message.content}</Text>}
-        </TouchableOpacity>
+                    {message.content.length !== 0 && <Text style={styles.messageContent}>{message.content}</Text>}
+                </TouchableOpacity>
+            </View>
+
+            <Text style={currentUserIsSender ? styles.timestampSent : styles.timestampReceived}>
+                {formattedTimestamp}
+            </Text>
+        </View>
     );
 }
 
@@ -81,6 +129,7 @@ const MessagesScreen = ({ navigation, ...props }) => {
             if (res.status === 200) {
                 setMessagesList(res.data);
                 //listRef.current.scrollToEnd({ animated: false });
+                scrollToBottom();
 
                 // emit message through socket here!
             }
@@ -95,22 +144,79 @@ const MessagesScreen = ({ navigation, ...props }) => {
     }, []);
 
     useEffect(() => {
+        scrollToBottom();
+    }, [messagesList]);
+
+    const scrollToBottom = () => {
         if (listRef.current && messagesList.length > 0) {
             // using setTimeout to delay the scroll until after rendering
             setTimeout(() => {
                 listRef.current.scrollToIndex({ index: messagesList.length - 1, animated: false });
             }, 100);
         }
-    }, [messagesList]);
+    }
+
+    // const onScroll = (e) => {
+    //     const { contentOffset } = e.nativeEvent;
+
+    //     if (contentOffset.y )
+    // }
+
+    const handlePickAttachment = async () => {
+        try {
+            const [pickResult] = await pick();
+
+            const { name, uri, type } = pickResult;
+
+            scrollToBottom();
+            setAttachment({ name, uri, type });
+            console.log(pickResult);
+        } catch (err) {
+            console.log('error at picking file', err.message);
+        }
+    }
 
     const handleSendMessage = async () => {
         try {
-            if (!messageField) {
+            if (!messageField && !attachment) {
                 return;
             }
 
-            const res = await axiosInstance.post(`/message/${groupId}`, {
-                content: messageField
+            let attachmentUrl;
+            if (attachment) {
+                const form = new FormData();
+                form.append('file', {
+                    uri: attachment.uri,
+                    name: attachment.name || 'attachment',
+                    type: attachment.type
+                });
+
+                const resFile = await axiosInstance.postForm(`/file/upload`, form, {
+                    headers: {
+                        'Authorization': `Bearer ${accessToken}`,
+                        'Content-Type': 'multipart/form-data'
+                    },
+                    validateStatus: status => status < 500, // throw error if status is at least 500
+                });
+
+                if (resFile.status >= 400) {
+                    const errorMessage = resFile.data.error;
+                    console.log(errorMessage);
+                    Alert.alert('Error', errorMessage);
+                    return;
+                }
+
+                if (resFile.status === 201) {
+                    console.log('File uploaded!');
+                    attachmentUrl = resFile.data;
+                }
+            }
+
+            const resMessage = await axiosInstance.post(`/message/${groupId}`, {
+                content: messageField,
+                attachment: attachmentUrl,
+                attachmentType: attachment?.type,
+                attachmentFilename: attachment?.name
             }, {
                 headers: {
                     'Authorization': `Bearer ${accessToken}`
@@ -118,21 +224,22 @@ const MessagesScreen = ({ navigation, ...props }) => {
                 validateStatus: status => status < 500, // throw error if status is at least 500
             });
 
-            if (res.status >= 400 ) {
-                const errorMessage = res.data.error;
+            if (resMessage.status >= 400 ) {
+                const errorMessage = resMessage.data.error;
                 console.log(errorMessage);
                 Alert.alert('Error', errorMessage);
             }
 
-            if (res.status === 201) {
+            if (resMessage.status === 201) {
                 setMessageField('');
+                setAttachment(null);
                 setTimeout(() => {
                     listRef.current.scrollToIndex({ index: messagesList.length - 1, animated: false });
                 }, 100);
             }
         } catch (err) {
-            console.error('Error creating group:', err);
-            Alert.alert('Error', 'Failed to create group');
+            console.error('Error sending message:', err);
+            Alert.alert('Error', 'Failed to send message');
         }
     }
 
@@ -168,7 +275,13 @@ const MessagesScreen = ({ navigation, ...props }) => {
             <FlatList
                 ref={listRef}
                 data={messagesList}
-                renderItem={(item) => <MessageComponent message={item.item} currentUserId={currentUserId}/>}
+                renderItem={(item) => 
+                    <MessageComponent
+                        message={item.item}
+                        currentUserId={currentUserId}
+                        navigation={navigation}
+                    />
+                }
                 keyExtractor={(item, index) => `${item._id}-${index}`}
                 contentContainerStyle={styles.messagesContainer}
                 getItemLayout={(data, index) => ({
@@ -178,9 +291,24 @@ const MessagesScreen = ({ navigation, ...props }) => {
                 })}
                 initialNumToRender={10}
                 windowSize={10}
+                // checking if list is scrolled to (near) bottom
+                // onScroll={onScroll}
             />
 
+            {attachment &&
+                <View style={styles.attachmentContainer}>
+                    <TouchableOpacity onPress={() => setAttachment(null)}>
+                        <Icon name="times-circle" size={scaleSize(20)} color="black"/>
+                    </TouchableOpacity>
+                    <Text style={{  }}>{attachment?.name} / {attachment?.type}</Text>
+                </View>
+            }
+
             <View style={styles.inputContainer}>
+
+                <TouchableOpacity style={styles.attachmentIcon} onPress={handlePickAttachment}>
+                    <Icon name="paperclip" size={scaleSize(26)} color="black"/>
+                </TouchableOpacity>
                 <TextInput
                     style={styles.messageInput}
                     value={messageField}
@@ -211,14 +339,19 @@ const styles = StyleSheet.create({
     messagesContainer: {
         // maxHeight: getScreenHeight(11/13),
         justifyContent: 'flex-end',
-        width: scaleSize(360),
+        width: scaleSize(365),
         padding: scaleSize(10),
         gap: 10,
         flexGrow: 1,
     },
+    senderDisplayName: {
+        fontWeight: 'bold',
+        fontSize: scaleSize(15)
+    },
     messageReceived: {
         minHeight: scaleSize(50),
-        minWidth: scaleSize(50),
+        //minWidth: scaleSize(50),
+        maxWidth: scaleSize(300),
         backgroundColor: 'tomato',
         borderRadius: 10,
         padding: scaleSize(10),
@@ -235,13 +368,14 @@ const styles = StyleSheet.create({
         // elevation: 4,
     },
     messageSent: {
-        minHeight: scaleSize(50),
-        minWidth: scaleSize(50),
+        minHeight: scaleSize(40),
+        //minWidth: scaleSize(50),
+        maxWidth: scaleSize(350),
         backgroundColor: 'dodgerblue',
         borderRadius: 10,
         padding: scaleSize(10),
         justifyContent: 'center',
-        alignItems: 'center',
+        alignItems: 'flex-start',
         alignSelf: 'flex-end',
         // shadowColor: "#000",
         // shadowOffset: {
@@ -255,6 +389,29 @@ const styles = StyleSheet.create({
     messageContent: {
         fontSize: scaleSize(16),
     },
+    timestampReceived: {
+        alignSelf: 'flex-start',
+        fontSize: scaleSize(12),
+        color: 'grey',
+        fontStyle: 'italic',
+    },
+    timestampSent: {
+        alignSelf: 'flex-end',
+        fontSize: scaleSize(12),
+        color: 'grey',
+        fontStyle: 'italic',
+    },
+    attachmentContainer: {
+        height: scaleSize(40),
+        width: '100%',
+        backgroundColor: 'lightgrey',
+        borderTopWidth: 1,
+        borderColor: 'grey',
+        alignItems: 'center',
+        flexDirection: 'row',
+        gap: scaleSize(16),
+        paddingLeft: scaleSize(16),
+    },
     inputContainer: {
         height: getScreenHeight(1/13),
         width: '100%',
@@ -267,7 +424,17 @@ const styles = StyleSheet.create({
     },
     messageInput: {
         ...globalStyles.input,
-        width: scaleSize(280)
+        flexGrow: 1,
+        flexShrink: 1
+    },
+    attachmentIcon: {
+        borderRadius: 10,
+        borderWidth: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        height: scaleSize(44),
+        width: scaleSize(44),
+        marginLeft: scaleSize(12),
     },
     sendButton: {
         width: scaleSize(60),
