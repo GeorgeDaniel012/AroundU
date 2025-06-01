@@ -11,13 +11,14 @@ import { CONNECTION } from '../config/config';
 import Video from "react-native-video";
 import Icon from "react-native-vector-icons/FontAwesome5";
 import { pick } from "@react-native-documents/picker";
+import MessageManageModal from "../components/MessageManageModal";
 
 // const AttachmentPreviewComponent = (props) => {
 //     const {  } = props;
 // }
 
 const MessageComponent = ({navigation, ...props}) => {
-    const { message, currentUserId } = props;
+    const { message, currentUserId, setSelectedMessage, setModalVisible } = props;
     const [imageError, setImageError] = useState(false);
 
     const formattedTimestamp = new Intl.DateTimeFormat('en-US', {
@@ -54,7 +55,10 @@ const MessageComponent = ({navigation, ...props}) => {
                         }
                     </TouchableOpacity>
                 }
-                <TouchableOpacity style={currentUserIsSender ? styles.messageSent : styles.messageReceived}>
+                <TouchableOpacity
+                    style={currentUserIsSender ? styles.messageSent : styles.messageReceived}
+                    onLongPress={() =>{ setSelectedMessage(message); setModalVisible(true) }}
+                >
                     {!currentUserIsSender &&
                         <Text style={styles.senderDisplayName}>{message.sender.userProfile.displayName}</Text>
                     }
@@ -95,11 +99,13 @@ const MessageComponent = ({navigation, ...props}) => {
 }
 
 const MessagesScreen = ({ navigation, ...props }) => {
-    const { groupInfo } = props.route.params; // whole groups object
+    const { groupInfo, permissionLevel } = props.route.params; // whole groups object
     const { _id: groupId, groupName } = groupInfo; // needing just id and name
     const [messageField, setMessageField] = useState('');
     const [messagesList, setMessagesList] = useState([]);
     const [attachment, setAttachment] = useState(null);
+    const [isModalVisible, setModalVisible] = useState(false);
+    const [selectedMessage, setSelectedMessage] = useState(null);
 
     const [currentUserId, setCurrentUserId] = useState('');
     const { accessToken } = useContext(AuthContext);
@@ -172,7 +178,7 @@ const MessagesScreen = ({ navigation, ...props }) => {
             setAttachment({ name, uri, type });
             console.log(pickResult);
         } catch (err) {
-            console.log('error at picking file', err.message);
+            console.log('Error at picking file:', err.message);
         }
     }
 
@@ -236,10 +242,42 @@ const MessagesScreen = ({ navigation, ...props }) => {
                 setTimeout(() => {
                     listRef.current.scrollToIndex({ index: messagesList.length - 1, animated: false });
                 }, 100);
+
+                // emit send message through socket here!
             }
         } catch (err) {
             console.error('Error sending message:', err);
             Alert.alert('Error', 'Failed to send message');
+        }
+    }
+
+    const handleDeleteMessage = async (messageId) => {
+        try {
+            const res = await axiosInstance.delete(`message/${messageId}`, {
+                headers: {
+                    'Authorization': `Bearer ${accessToken}`
+                },
+                validateStatus: status => status < 500,
+            });
+
+            if (res.status >= 400) {
+                const errorMessage = res.data.error;
+                console.log(errorMessage);
+                Alert.alert('Error', errorMessage);
+            }
+
+            if (res.status === 200) {
+                const filteredList = messagesList.filter((message) => 
+                    message._id !== messageId
+                );
+                setMessagesList(filteredList);
+                setModalVisible(false);
+
+                // emit delete message through socket here!
+            }
+        } catch (err) {
+            console.error('Error deleting message:', err);
+            Alert.alert('Error', 'Failed to delete message');
         }
     }
 
@@ -280,6 +318,8 @@ const MessagesScreen = ({ navigation, ...props }) => {
                         message={item.item}
                         currentUserId={currentUserId}
                         navigation={navigation}
+                        setSelectedMessage={setSelectedMessage}
+                        setModalVisible={setModalVisible}
                     />
                 }
                 keyExtractor={(item, index) => `${item._id}-${index}`}
@@ -320,6 +360,15 @@ const MessagesScreen = ({ navigation, ...props }) => {
                     <Text style={styles.sendButtonText}>Send</Text>
                 </TouchableOpacity>
             </View>
+
+            <MessageManageModal
+                message={selectedMessage}
+                isVisible={isModalVisible}
+                handleDeleteMessage={handleDeleteMessage}
+                closeModal={() => setModalVisible(false)}
+                permissionLevel={permissionLevel}
+                navigation={navigation}
+            />
         </KeyboardAvoidingView>
     );
 }
