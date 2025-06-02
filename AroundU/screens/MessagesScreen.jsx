@@ -113,17 +113,20 @@ const MessagesScreen = ({ navigation, ...props }) => {
     const [isModalVisible, setModalVisible] = useState(false);
     const [selectedMessage, setSelectedMessage] = useState(null);
 
-    const [currentUserId, setCurrentUserId] = useState('');
+    const [currentPermissionLevel, setCurrentPermissionLevel] = useState(permissionLevel);
+    const currentUserId = useRef('');
     const { accessToken } = useContext(AuthContext);
 
     const insets = useSafeAreaInsets();
     const listRef = useRef(null);
 
+    const getCurrentId = async () => {
+        const userId = await AsyncStorage.getItem('currentUserId');
+        currentUserId.current = userId;
+    }
+
     const fetchMessages = async () => {
         try {
-            const userId = await AsyncStorage.getItem('currentUserId');
-            setCurrentUserId(userId);
-
             const res = await axiosInstance.get(`message/${groupId}`, {
                 headers: {
                     'Authorization': `Bearer ${accessToken}`,
@@ -149,6 +152,7 @@ const MessagesScreen = ({ navigation, ...props }) => {
     }
 
     useEffect(() => {
+        getCurrentId();
         fetchMessages();
 
         // once connected to socket, request to join the group's room
@@ -166,7 +170,7 @@ const MessagesScreen = ({ navigation, ...props }) => {
 
         socket.on('newMessage', (message) => {
             console.log('received new message:', `${message?.content} + ${message?.attachment}`);
-            // if (message.sender._id !== currentUserId)
+            // if (message.sender._id !== currentUserId.current)
                 setMessagesList(prevMessagesList => [message, ...prevMessagesList]);
             //scrollToBottom();
         });
@@ -176,10 +180,20 @@ const MessagesScreen = ({ navigation, ...props }) => {
             setMessagesList(prevMessagesList => prevMessagesList.filter((message) => message._id !== messageId));
         });
 
+        socket.on('changePermissions', ({ memberId, permissionLevel }) => {
+            console.log('permissions change', { memberId, permissionLevel });
+            console.log('current id', currentUserId.current);
+            if (currentUserId.current === memberId) {
+                console.log(`current permissions changed from ${currentPermissionLevel} to ${permissionLevel}`);
+                setCurrentPermissionLevel(permissionLevel);
+            }
+        });
+
         // disabling socket event listeners
         return () => {
             socket.off('newMessage');
             socket.off('deleteMessage');
+            socket.off('changePermissions');
         }
     }, []);
 
@@ -347,7 +361,7 @@ const MessagesScreen = ({ navigation, ...props }) => {
                 renderItem={(item) => 
                     <MessageComponent
                         message={item.item}
-                        currentUserId={currentUserId}
+                        currentUserId={currentUserId.current}
                         navigation={navigation}
                         setSelectedMessage={setSelectedMessage}
                         setModalVisible={setModalVisible}
@@ -401,7 +415,7 @@ const MessagesScreen = ({ navigation, ...props }) => {
                 isVisible={isModalVisible}
                 handleDeleteMessage={handleDeleteMessage}
                 closeModal={() => setModalVisible(false)}
-                permissionLevel={permissionLevel}
+                permissionLevel={currentPermissionLevel}
                 navigation={navigation}
             />
         </KeyboardAvoidingView>

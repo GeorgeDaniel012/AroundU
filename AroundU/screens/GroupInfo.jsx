@@ -74,7 +74,9 @@ const MemberInfo = ({ navigation, ...props }) => {
                         }}
                     />
                 }
-                <Text style={{...globalStyles.unselectedThemeText}}>{userProfile.displayName}</Text>
+                <View style={{maxWidth: scaleSize(150)}}>
+                    <Text style={{...globalStyles.unselectedThemeText}}>{userProfile.displayName}</Text>
+                </View>
             </View>
             <View style={{...styles.permissionLevelTag, borderColor: permissionLevel.color}}>
                 <Text style={{...styles.permissionLevelTagText, color: permissionLevel.color}}>{permissionLevel.levelName}</Text>

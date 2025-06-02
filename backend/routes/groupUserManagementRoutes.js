@@ -454,6 +454,13 @@ router.put('/:groupId/permissions/:groupMemberId', verifyToken, async (req, res)
             return member;
         });
         await group.save();
+
+        // updating permissions in real time for group members
+        // so that an ex-mod+ cannot attempt to delete messages
+        const io = req.io;
+        io.to(groupId).emit('changePermissions', { memberId: groupMemberId, permissionLevel: permissionLevel });
+        console.log('updated permissions?');
+
         res.status(200).json({ message: 'User granted permissions successfully' });
     } catch (err) {
         res.status(500).json({ error: err.message });

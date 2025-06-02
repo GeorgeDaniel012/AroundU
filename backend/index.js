@@ -39,7 +39,10 @@ mongoose.connect('mongodb://localhost:27017/aroundu')
 app.use('/', authRoutes);
 app.use('/user', userRoutes);
 app.use('/group', groupRoutes);
-app.use('/group', groupUserManagementRoutes);
+app.use('/group', (req, res, next) => {
+    req.io = io;
+    next();
+}, groupUserManagementRoutes);
 app.use('/file', fileRoutes);
 app.use('/message', (req, res, next) => {
     req.io = io;
