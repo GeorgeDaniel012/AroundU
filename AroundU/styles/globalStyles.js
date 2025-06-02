@@ -5,12 +5,13 @@ export default StyleSheet.create({
     input: {
         borderWidth: 1,
         padding: 10,
-        width: 300,
+        width: scaleSize(300),
         margin: scaleSize(12),
         height: scaleSize(44),
         borderRadius: 10,
         fontSize: scaleSize(16),
-        color: 'black'
+        color: 'black',
+        backgroundColor: 'white'
     },
     selectedTheme: {
         justifyContent: 'center', 
@@ -57,7 +58,7 @@ export default StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         padding: 10,
-        backgroundColor: 'red',
+        backgroundColor: '#ee0000',
         borderRadius: 10,
         margin: scaleSize(12),
     },

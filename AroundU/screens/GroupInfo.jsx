@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useCallback, useContext, useEffect, useState } from 'react';
 import { View, Text, Linking, Button, ScrollView, TouchableOpacity, Image, StyleSheet, Alert, TouchableWithoutFeedback, Modal } from 'react-native';
 import axiosInstance from '../utils/axiosInstance';
 import BackButton from '../components/BackButton';
@@ -11,6 +11,7 @@ import { CommonActions } from '@react-navigation/native';
 import { AuthContext } from '../contexts/AuthContext';
 import ReviewRequestsModal from '../components/ReviewRequestsModal';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useFocusEffect } from '@react-navigation/native';
 
 const permissionLevelsList = [
     {
@@ -21,7 +22,7 @@ const permissionLevelsList = [
     {
         id: 1,
         levelName: 'Mod',
-        color: 'yellow'
+        color: 'goldenrod'
     },
     {
         id: 2,
@@ -34,6 +35,12 @@ const permissionLevelsList = [
         color: 'red'
     },
 ];
+
+const alertManage = (callback, message) => {
+    Alert.alert('Warning', message,
+        [{ text: 'No', onPress: () => {} }, { text: 'Yes', onPress: () => callback() }]
+    );
+}
 
 const getPermissionLevel = (permission) => {
     const permissionLevel = permissionLevelsList.find(perm => perm.id === permission);
@@ -233,7 +240,10 @@ const MemberManageModal = ({ navigation, ...props }) => {
                             {   // user is moderator or higher
                                 // and of higher rank than the other user
                                 (currentUserId !== member?._id && permissionLevel >= 1 && memberPermission < permissionLevel) &&
-                                <TouchableOpacity onPress={handleKick} style={styles.modalOptions}>
+                                <TouchableOpacity
+                                    onPress={() => alertManage(handleKick, `Are you sure you want to kick ${member?.userProfile.displayName}?`)}
+                                    style={styles.modalOptions}
+                                >
                                     <Text style={globalStyles.unselectedThemeText}>Kick {member?.userProfile.displayName}</Text>
                                 </TouchableOpacity>
                             }
@@ -241,7 +251,10 @@ const MemberManageModal = ({ navigation, ...props }) => {
                             {   // user is admin or higher
                                 // and of higher rank than the other user
                                 (currentUserId !== member?._id && permissionLevel >= 2 && memberPermission < permissionLevel) &&
-                                <TouchableOpacity onPress={handleBan} style={styles.modalOptions}>
+                                <TouchableOpacity
+                                    onPress={() => alertManage(handleBan, `Are you sure you want to ban ${member?.userProfile.displayName}?`)}
+                                    style={styles.modalOptions}
+                                >
                                     <Text style={globalStyles.unselectedThemeText}>Ban {member?.userProfile.displayName}</Text>
                                 </TouchableOpacity>
                             }
@@ -251,7 +264,11 @@ const MemberManageModal = ({ navigation, ...props }) => {
                                 permissionLevelsList.map((permission) => {
                                     if (permission.id < permissionLevel && permission.id !== memberPermission) {
                                         return (
-                                            <TouchableOpacity key={permission.id} onPress={() => handlePermissionChange(permission.id)} style={styles.modalOptions}>
+                                            <TouchableOpacity key={permission.id}
+                                                onPress={() => alertManage(() => handlePermissionChange(permission.id),
+                                                    `Are you sure you want to change the permission level for ${member?.userProfile.displayName}?`)}
+                                                style={styles.modalOptions}
+                                            >
                                                 {
                                                     permission.id !== 0 ?
                                                     <Text style={globalStyles.unselectedThemeText}>Make {member?.userProfile.displayName} {permission.levelName}</Text> :
@@ -266,7 +283,11 @@ const MemberManageModal = ({ navigation, ...props }) => {
 
                             {   // user is owner
                                 (currentUserId !== member?._id && permissionLevel === 3) &&
-                                <TouchableOpacity onPress={handleOwnershipTransfer} style={styles.modalOptions}>
+                                <TouchableOpacity
+                                    onPress={() => alertManage(handleOwnershipTransfer,
+                                        `Are you sure you want to transfer group ownership to ${member?.userProfile.displayName}?`)}
+                                    style={styles.modalOptions}
+                                >
                                     <Text style={globalStyles.unselectedThemeText}>Transfer ownership to {member?.userProfile.displayName}</Text>
                                 </TouchableOpacity>
                             }
@@ -367,6 +388,34 @@ const GroupInfo = ({ navigation, ...props }) => {
         }
     }
 
+    const handleDeleteGroup = async () => {
+        try {
+            const res = await axiosInstance.delete(`group/${groupId}`, {
+                headers: {
+                    'Authorization': `Bearer ${accessToken}`,
+                    'Content-Type': 'application/json'
+                },
+                validateStatus: status => status < 500, // throw error if status is at least 500
+            });
+
+            if (res.status >= 400) {
+                const errorMessage = res.data.error;
+                console.log('error joining: ', errorMessage);
+                Alert.alert('Error', errorMessage);
+            }
+
+            if (res.status === 200) {
+                Alert.alert('Success', 'Group successfully deleted.');
+                navigation.goBack();
+            }
+
+            fetchInfo();
+        } catch (err) {
+            console.error('Error joining group:', err);
+            Alert.alert('Error', 'Failed to delete group');
+        }
+    }
+
     const fetchInfo = async () => {
         try {
             const userId = await AsyncStorage.getItem('currentUserId');
@@ -415,9 +464,9 @@ const GroupInfo = ({ navigation, ...props }) => {
         }
     }
 
-    useEffect(() => {
+    useFocusEffect(useCallback(() => {
         fetchInfo();
-    }, []);
+    }, []));
 
     return (
         <ScrollView contentContainerStyle={{ justifyContent: 'center', alignItems: 'center', flexGrow: 1 }}>
@@ -436,12 +485,12 @@ const GroupInfo = ({ navigation, ...props }) => {
                             imageError ?
                             <Image
                                 source={ require('../assets/images/missing_group_icon.png') }
-                                style={{ width: scaleSize(140), height: scaleSize(140), borderRadius: 100 }}
+                                style={{ width: scaleSize(160), height: scaleSize(160), borderRadius: 100 }}
                                 resizeMode="contain"
                             /> :
                             <Image
                                 source={{ uri: `${CONNECTION}/static/${groupInfo.groupIcon}`, cache: 'reload' }}
-                                style={{ width: scaleSize(140), height: scaleSize(140), borderRadius: 100 }}
+                                style={{ width: scaleSize(160), height: scaleSize(160), borderRadius: 100 }}
                                 resizeMode="contain"
                                 onError={({nativeEvent: {error}}) => {
                                     setImageError(true);
@@ -451,7 +500,7 @@ const GroupInfo = ({ navigation, ...props }) => {
                     </View>
 
                     <View style={{ flex: 1, minHeight: getScreenHeight(1/6), alignItems: 'center', maxWidth: scaleSize(300), }}>
-                        <Text style={{...globalStyles.nameText, marginBottom: scaleSize(10)}}>{groupInfo.groupName}</Text>
+                        <Text style={{...globalStyles.nameText, marginBottom: scaleSize(10), textAlign: 'center'}}>{groupInfo.groupName}</Text>
                         <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginBottom: scaleSize(20) }}>
                             <Text style={{...globalStyles.unselectedThemeText}}>{groupInfo.theme}</Text>
                             <Icon
@@ -499,8 +548,9 @@ const GroupInfo = ({ navigation, ...props }) => {
                         ))}
                     </ScrollView> */}
 
-                    <View style={{ height: getScreenHeight(2/6), justifyContent: 'center', alignItems: 'center' }}>
-                        <Text style={{ fontSize: scaleSize(12) }}>{groupInfo.tags.map(tag => `#${tag} `)}</Text>
+                    <Text style={{ fontSize: scaleSize(14), marginTop: scaleSize(12) }}>{groupInfo.tags.map(tag => `#${tag} `)}</Text>
+
+                    <View style={styles.buttonsContainer}>
                         <TouchableOpacity 
                             style={globalStyles.buttons} 
                             onPress={() => Linking.openURL(`https://www.google.com/maps/search/?api=1&query=${groupInfo.location.coordinates[1]}%2C${groupInfo.location.coordinates[0]}`)}
@@ -520,45 +570,55 @@ const GroupInfo = ({ navigation, ...props }) => {
                             </TouchableOpacity>
                         }
 
-                        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                            {   
-                                // only admins and the owner can edit the group
-                                permissionLevel >= 2 && 
-                                <TouchableOpacity 
-                                    style={globalStyles.buttons} 
-                                    onPress={() => navigation.navigate('EditGroup', { groupInfo: groupInfo })}
-                                >
-                                    <Text style={{...globalStyles.buttonText, fontSize: scaleSize(22)}}>Edit</Text>
-                                    <Icon name="edit" size={scaleSize(21)} color='white' style={{marginLeft: 10}}/>
-                                </TouchableOpacity>
-                            }
+                        {   
+                            // only admins and the owner can edit the group
+                            permissionLevel >= 2 && 
+                            <TouchableOpacity 
+                                style={globalStyles.buttons} 
+                                onPress={() => navigation.navigate('EditGroup', { groupInfo: groupInfo })}
+                            >
+                                <Text style={{...globalStyles.buttonText, fontSize: scaleSize(22)}}>Edit</Text>
+                                <Icon name="edit" size={scaleSize(21)} color='white' style={{marginLeft: 10}}/>
+                            </TouchableOpacity>
+                        }
 
-                            {
-                                userInGroup ?
-                                <TouchableOpacity 
-                                    style={globalStyles.buttons} 
-                                    onPress={handleLeaveGroup}
-                                >
-                                    <Text style={{...globalStyles.buttonText, fontSize: scaleSize(22)}}>Leave Group</Text>
-                                    <Icon name="door-open" size={scaleSize(21)} color='white' style={{marginLeft: 10}}/>
-                                </TouchableOpacity> :
-                                <TouchableOpacity 
-                                    style={globalStyles.buttons} 
-                                    onPress={handleJoinGroup}
-                                >
-                                    {groupInfo.everyoneCanJoin ?
-                                        <>
-                                            <Text style={{...globalStyles.buttonText, fontSize: scaleSize(22)}}>Join Group</Text>
-                                            <Icon name="door-closed" size={scaleSize(21)} color='white' style={{marginLeft: 10}}/>
-                                        </> :
-                                        <>
-                                            <Text style={{...globalStyles.buttonText, fontSize: scaleSize(22)}}>Request to join</Text>
-                                            <Icon name="envelope-open" size={scaleSize(21)} color='white' style={{marginLeft: 10}}/>
-                                        </>
-                                    }
-                                </TouchableOpacity>
-                            }
-                        </View>
+                        {
+                            userInGroup ?
+                            <TouchableOpacity 
+                                style={globalStyles.buttons} 
+                                onPress={() => alertManage(handleLeaveGroup, `Are you sure you want to leave ${groupInfo.groupName}?`)}
+                            >
+                                <Text style={{...globalStyles.buttonText, fontSize: scaleSize(22)}}>Leave Group</Text>
+                                <Icon name="door-open" size={scaleSize(21)} color='white' style={{marginLeft: 10}}/>
+                            </TouchableOpacity> :
+                            <TouchableOpacity 
+                                style={globalStyles.buttons} 
+                                onPress={handleJoinGroup}
+                            >
+                                {groupInfo.everyoneCanJoin ?
+                                    <>
+                                        <Text style={{...globalStyles.buttonText, fontSize: scaleSize(22)}}>Join Group</Text>
+                                        <Icon name="door-closed" size={scaleSize(21)} color='white' style={{marginLeft: 10}}/>
+                                    </> :
+                                    <>
+                                        <Text style={{...globalStyles.buttonText, fontSize: scaleSize(22)}}>Request to join</Text>
+                                        <Icon name="envelope-open" size={scaleSize(21)} color='white' style={{marginLeft: 10}}/>
+                                    </>
+                                }
+                            </TouchableOpacity>
+                        }
+
+                        {
+                            // only the owner can delete the group
+                            permissionLevel >= 3 && 
+                            <TouchableOpacity 
+                                style={globalStyles.redButtons} 
+                                onPress={() => alertManage(handleDeleteGroup, `Are you sure you want to delete ${groupInfo.groupName}? This action cannot be reversed.`)}
+                            >
+                                <Text style={{...globalStyles.buttonText, fontSize: scaleSize(22)}}>Delete Group</Text>
+                                <Icon name="times-circle" size={scaleSize(21)} color='white' style={{marginLeft: 10}}/>
+                            </TouchableOpacity>
+                        }
                     </View>
                 </View>
                 // </ScrollView>
@@ -625,6 +685,15 @@ const styles = StyleSheet.create({
         textAlign: 'center',
         color: 'black',
         fontSize: scaleSize(16)
+    },
+    buttonsContainer: {
+        flex: 1,
+        width: scaleSize(360),
+        marginTop: scaleSize(12),
+        justifyContent: 'center',
+        alignItems: 'center',
+        flexWrap: 'wrap',
+        flexDirection: 'row'
     },
     modalContainer: {
         flex: 1,

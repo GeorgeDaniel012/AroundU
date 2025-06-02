@@ -295,6 +295,10 @@ router.put('/:groupId/ban/:bannedUserId', verifyToken, async (req, res) => {
         // if user is in group the group is removed from their list
         bannedUser.groups = bannedUser.groups.filter(group => !group.equals(groupId));
         await bannedUser.save();
+
+        const io = req.io;
+        io.to(groupId).emit('userKickOrBan', kickedUserId);
+        
         res.status(200).json({ message: 'User banned successfully' });
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -393,6 +397,10 @@ router.put('/:groupId/kick/:kickedUserId', verifyToken, async (req, res) => {
         // group is removed from user's list
         kickedUser.groups = kickedUser.groups.filter(group => !group.equals(groupId));
         await kickedUser.save();
+
+        const io = req.io;
+        io.to(groupId).emit('userKickOrBan', kickedUserId);
+
         res.status(200).json({ message: 'User kicked successfully' });
     } catch (err) {
         res.status(500).json({ error: err.message });

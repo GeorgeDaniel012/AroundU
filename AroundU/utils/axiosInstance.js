@@ -9,16 +9,16 @@ const axiosInstance = axios.create({
     // timeout: 2000
 });
 
-// axiosInstance.interceptors.request.use(
-//     async (req) => {
-//         console.log('[Axios Interceptor] Request:', req);
-//         return req;
-//     },
-//     async (err) => {
-//         console.log('[Axios Interceptor] Request Error:', err);
-//         return err;
-//     },
-// );
+axiosInstance.interceptors.request.use(
+    async (req) => {
+        // console.log('[Axios Interceptor] Request:', req);
+        return req;
+    },
+    async (err) => {
+        console.log('[Axios Interceptor] Request Error:', err);
+        return err;
+    },
+);
 
 // in case the user is unauthorized to perform the request (code 401)
 // the app tries to refresh the token and tries the request again

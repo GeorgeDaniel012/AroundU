@@ -85,9 +85,9 @@ const MessageComponent = React.memo(({navigation, ...props}) => {
                             /> :
                             // this is any other file
                             <TouchableOpacity onPress={() => Linking.openURL(`${CONNECTION}/static/${message.attachment}`)}>
-                                <View style={{ paddingVertical: scaleSize(5), flexDirection: 'row', gap: scaleSize(10) }}>
+                                <View style={{ paddingVertical: scaleSize(5), flexDirection: 'row', gap: scaleSize(10), alignItems: 'center' }}>
                                     <Icon name="file-download" size={scaleSize(16)} color="black"/>
-                                    <Text style={{ fontSize: scaleSize(16), textDecorationLine: 'underline' }}>{message.attachmentFilename}</Text>
+                                    <Text style={{ fontSize: scaleSize(16), textDecorationLine: 'underline', maxWidth: scaleSize(260) }}>{message.attachmentFilename}</Text>
                                 </View>
                             </TouchableOpacity>
                         )
@@ -187,6 +187,11 @@ const MessagesScreen = ({ navigation, ...props }) => {
                 console.log(`current permissions changed from ${currentPermissionLevel} to ${permissionLevel}`);
                 setCurrentPermissionLevel(permissionLevel);
             }
+        });
+
+        socket.on('userKickOrBan', (memberId) => {
+            if (currentUserId.current === memberId)
+                navigation.goBack();
         });
 
         // disabling socket event listeners
@@ -389,12 +394,11 @@ const MessagesScreen = ({ navigation, ...props }) => {
                     <TouchableOpacity onPress={() => setAttachment(null)}>
                         <Icon name="times-circle" size={scaleSize(20)} color="black"/>
                     </TouchableOpacity>
-                    <Text style={{  }}>{attachment?.name} / {attachment?.type}</Text>
+                    <Text style={{ maxWidth: scaleSize(300) }}>{attachment?.name}</Text>
                 </View>
             }
 
             <View style={styles.inputContainer}>
-
                 <TouchableOpacity style={styles.attachmentIcon} onPress={handlePickAttachment}>
                     <Icon name="paperclip" size={scaleSize(26)} color="black"/>
                 </TouchableOpacity>

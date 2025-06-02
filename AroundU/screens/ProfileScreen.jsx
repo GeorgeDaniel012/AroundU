@@ -94,12 +94,12 @@ const ProfileScreen = ({ navigation, ...props }) => {
                         imageError ?
                         <Image
                             source={ require('../assets/images/missing_user_icon.png') }
-                            style={{ width: scaleSize(140), height: scaleSize(140), borderRadius: 100 }}
+                            style={{ width: scaleSize(160), height: scaleSize(160), borderRadius: 100 }}
                             resizeMode="contain"
                         /> :
                         <Image
                             source={{ uri: `${CONNECTION}/static/${userIconPath}`, cache: 'reload' }}
-                            style={{ width: scaleSize(140), height: scaleSize(140), borderRadius: 100 }}
+                            style={{ width: scaleSize(160), height: scaleSize(160), borderRadius: 100 }}
                             resizeMode="contain"
                             onError={({nativeEvent: {error}}) => {
                                 setImageError(true);

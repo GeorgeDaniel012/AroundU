@@ -1,11 +1,12 @@
 import React, { useCallback, useContext, useEffect, useState } from "react";
-import { View, Text, Image, TouchableOpacity, StyleSheet, ScrollView } from "react-native";
+import { View, Text, Image, TouchableOpacity, StyleSheet, ScrollView, Alert } from "react-native";
 import { scaleSize } from "../utils/helpers";
 import globalStyles from "../styles/globalStyles";
 import { CONNECTION } from "../config/config";
 import { AuthContext } from "../contexts/AuthContext";
 import axiosInstance from "../utils/axiosInstance";
 import { useFocusEffect } from "@react-navigation/native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const GroupComponent = ({ navigation, ...props }) => {
     const [imageError, setImageError] = useState(false);
@@ -46,6 +47,8 @@ const GroupsScreen = ({ navigation }) => {
     const [isLoading, setIsLoading] = useState(true);
 
     const { accessToken } = useContext(AuthContext);
+
+    const insets = useSafeAreaInsets();
 
     const fetchGroups = async () => {
         try {
@@ -93,10 +96,10 @@ const GroupsScreen = ({ navigation }) => {
         <>
             {groupsList.length === 0 ?
                 <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-                    <Text style={globalStyles.nameText}>You are not in any group.</Text>
+                    <Text style={{ fontSize: scaleSize(26), textAlign: 'center', width: scaleSize(340) }}>You are not in any groups. In order to join a group navigate to the Discover tab.</Text>
                 </View> :
                 <ScrollView contentContainerStyle={{ justifyContent: 'center', alignItems: 'center', flexGrow: 1 }}>
-                    <View style={{ alignItems: 'center', width: scaleSize(300), gap: 20, marginVertical: scaleSize(40) }}>
+                    <View style={{ alignItems: 'center', width: scaleSize(300), gap: 20, paddingVertical: insets.top + scaleSize(20) }}>
                         <Text style={{ fontSize: scaleSize(16) }}>Your groups:</Text>
                         {groupsList.map((item, index) => (
                             <GroupComponent

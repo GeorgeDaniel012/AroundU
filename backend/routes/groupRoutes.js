@@ -5,6 +5,7 @@ const User = require('../models/User');
 const verifyToken = require('../middlewares/authMiddleware');
 const { upload } = require('../middlewares/multerStorage');
 const { removeFileFromUploads } = require('../utils/storageHelpers');
+const Message = require('../models/Message');
 
 const router = express.Router();
 
@@ -318,6 +319,8 @@ router.delete('/:groupId', verifyToken, async (req, res) => {
 
         // also remove group icon from storage
         removeFileFromUploads(group.groupIcon);
+
+        await Message.deleteMany({ group: groupId });
 
         await Group.findByIdAndDelete(groupId);
         res.status(200).json({ message: 'Group deleted successfully' });

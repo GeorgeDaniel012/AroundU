@@ -9,6 +9,7 @@ import { distanceBetweenPoints, scaleSize, themeList, getIconForTheme } from '..
 import { CONNECTION } from '../config/config';
 import globalStyles from '../styles/globalStyles';
 import { useFocusEffect } from '@react-navigation/native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const MarkerIcon = (props) => {
     const { group } = props;
@@ -168,8 +169,10 @@ const FilterModal = (props) => {
 const DiscoverScreen = ({ navigation }) => {
     const [locationGranted, setLocationGranted] = useState(null); // for location permission
     const [currentLocation, setCurrentLocation] = useState({
-        latitude: 45.434169,
-        longitude: 28.019074,
+        //latitude: 45.434169,
+        //longitude: 28.019074,
+        latitude: 44.42695,
+        longitude: 26.10234
     });
     const [region, setRegion] = useState({
         latitude: 45.434169,
@@ -184,6 +187,8 @@ const DiscoverScreen = ({ navigation }) => {
     const [themeFilter, setThemeFilter] = useState([]);
     const [mapKey, setMapKey] = useState(0);
     const [isModalVisible, setModalVisible] = useState(false);
+
+    const insets = useSafeAreaInsets();
 
     const mapRef = useRef(null); // reference to MapView to access methods like animateToRegion
     const hasRequestedPermission = useRef(false);
@@ -390,10 +395,10 @@ const DiscoverScreen = ({ navigation }) => {
                     <TouchableOpacity style={styles.locationButton} onPress={goToCurrentLocation}>
                         <Icon name="compass" size={scaleSize(30)} color="grey"/>
                     </TouchableOpacity>
-                    <TouchableOpacity style={styles.filterButton} onPress={() => setModalVisible(true)}>
+                    <TouchableOpacity style={{...styles.filterButton, top: insets.top + 20}} onPress={() => setModalVisible(true)}>
                         <Icon name="sliders-h" size={scaleSize(30)} color="grey"/>
                     </TouchableOpacity>
-                    <TouchableOpacity style={styles.refreshButton} onPress={fetchGroups}>
+                    <TouchableOpacity style={{...styles.refreshButton, top: insets.top + 20}} onPress={fetchGroups}>
                         <Icon name="sync" size={scaleSize(30)} color="grey"/>
                     </TouchableOpacity>
                     <TouchableOpacity style={styles.createButton} onPress={() => navigation.navigate("CreateGroup", { currentLocation: currentLocation })}>
