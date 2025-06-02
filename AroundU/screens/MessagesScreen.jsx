@@ -26,6 +26,8 @@ const socket = io(CONNECTION, {
 const MessageComponent = React.memo(({navigation, ...props}) => {
     const { message, currentUserId, setSelectedMessage, setModalVisible } = props;
     const [imageError, setImageError] = useState(false);
+    const [imageVideoSize, setImageVideoSize] = useState({ width: scaleSize(260), height: scaleSize(260) });
+    const [hasLoaded, setHasLoaded] = useState(false);
 
     const formattedTimestamp = new Intl.DateTimeFormat('en-US', {
         year: 'numeric', month: '2-digit', day: '2-digit',
@@ -33,6 +35,27 @@ const MessageComponent = React.memo(({navigation, ...props}) => {
     }).format(new Date(message.createdAt));
 
     const currentUserIsSender = currentUserId === message.sender._id;
+    const videoRef = useRef(null);
+
+    const onLoadImage = (e) => {
+        if (hasLoaded) return;
+        const { width, height } = e.nativeEvent.source;
+
+        const maxDim = scaleSize(260);
+        const scale = Math.min(maxDim / width, maxDim / height);
+        setImageVideoSize({ width: width*scale, height: height*scale });
+        setHasLoaded(true);
+    }
+
+    const onLoadVideo = (e) => {
+        if (hasLoaded) return;
+        const { width, height } = e.naturalSize;
+
+        const maxDim = scaleSize(260);
+        const scale = Math.min(maxDim / width, maxDim / height);
+        setImageVideoSize({ width: width*scale, height: height*scale });
+        setHasLoaded(true);
+    }
 
     return (
         <View>
@@ -72,28 +95,37 @@ const MessageComponent = React.memo(({navigation, ...props}) => {
                         (message.attachmentType.startsWith('image') ?
                             <Image
                                 source={{ uri: `${CONNECTION}/static/${message.attachment}`, cache: 'reload' }}
-                                style={{ width: scaleSize(200), height: scaleSize(200) }}
+                                style={{ width: imageVideoSize.width, height: imageVideoSize.height }}
                                 resizeMode="contain"
+                                onLoad={onLoadImage}
                             /> : 
                             message.attachmentType.startsWith('video') ?
-                            <Video
-                                source={{ uri: `${CONNECTION}/static/${message.attachment}`, cache: 'reload' }}
-                                style={{ width: scaleSize(200), height: scaleSize(200) }}
-                                controls
-                                resizeMode="contain"
-                                paused
-                            /> :
-                            // this is any other file
-                            <TouchableOpacity onPress={() => Linking.openURL(`${CONNECTION}/static/${message.attachment}`)}>
-                                <View style={{ paddingVertical: scaleSize(5), flexDirection: 'row', gap: scaleSize(10), alignItems: 'center' }}>
-                                    <Icon name="file-download" size={scaleSize(16)} color="black"/>
-                                    <Text style={{ fontSize: scaleSize(16), textDecorationLine: 'underline', maxWidth: scaleSize(260) }}>{message.attachmentFilename}</Text>
-                                </View>
-                            </TouchableOpacity>
+                                <TouchableOpacity onPress={() => { videoRef.current.setFullScreen(true); videoRef.current.resume(); }}>
+                                    <Video
+                                        ref={videoRef}
+                                        source={{ uri: `${CONNECTION}/static/${message.attachment}`, cache: 'reload' }}
+                                        style={{ width: imageVideoSize.width, height: imageVideoSize.height, justifyContent: 'center', alignItems: 'center' }}
+                                        resizeMode="contain"
+                                        paused
+                                        onFullscreenPlayerDidDismiss={() => videoRef.current.pause()}
+                                        onLoad={onLoadVideo}
+                                    />
+                                </TouchableOpacity> :
+                                // this is any other file
+                                <TouchableOpacity onPress={() => Linking.openURL(`${CONNECTION}/static/${message.attachment}`)}>
+                                    <View style={{ paddingVertical: scaleSize(5), flexDirection: 'row', gap: scaleSize(10), alignItems: 'center' }}>
+                                        <Icon name="file-download" size={scaleSize(16)} color="black"/>
+                                        <Text 
+                                            style={{ fontSize: scaleSize(16), textDecorationLine: 'underline', maxWidth: scaleSize(260) }}
+                                        >{message.attachmentFilename}</Text>
+                                    </View>
+                                </TouchableOpacity>
                         )
                     }
 
-                    {message.content.length !== 0 && <Text style={styles.messageContent}>{message.content}</Text>}
+                    {message.content.length !== 0 && 
+                        <Text style={{...styles.messageContent, paddingTop: 2}}>{message.content}</Text>
+                    }
                 </TouchableOpacity>
             </View>
 
