@@ -511,7 +511,7 @@ const GroupInfo = ({ navigation, ...props }) => {
                             userInGroup &&
                             <TouchableOpacity 
                                 style={globalStyles.buttons} 
-                                onPress={() => navigation.navigate('MessagesScreen', { groupInfo: groupInfo, permissionLevel: permissionLevel })}
+                                onPress={() => navigation.navigate('MessagesScreen', { groupInfo: groupInfo, permissionLevel: permissionLevel, memberList: memberList })}
                             >
                                 <Text style={{...globalStyles.buttonText, fontSize: scaleSize(22)}}>Chat</Text>
                                 <Icon name="pen" size={scaleSize(21)} color='white' style={{marginLeft: 10}}/>

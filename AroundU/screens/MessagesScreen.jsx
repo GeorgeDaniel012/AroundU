@@ -12,12 +12,18 @@ import Video from "react-native-video";
 import Icon from "react-native-vector-icons/FontAwesome5";
 import { pick } from "@react-native-documents/picker";
 import MessageManageModal from "../components/MessageManageModal";
+import { io } from "socket.io-client";
+
+const socket = io(CONNECTION, {
+    transports: ['websocket']
+});
 
 // const AttachmentPreviewComponent = (props) => {
 //     const {  } = props;
 // }
 
-const MessageComponent = ({navigation, ...props}) => {
+// wrapping entire component in memo so that messages don't get re-rendered
+const MessageComponent = React.memo(({navigation, ...props}) => {
     const { message, currentUserId, setSelectedMessage, setModalVisible } = props;
     const [imageError, setImageError] = useState(false);
 
@@ -96,7 +102,7 @@ const MessageComponent = ({navigation, ...props}) => {
             </Text>
         </View>
     );
-}
+})
 
 const MessagesScreen = ({ navigation, ...props }) => {
     const { groupInfo, permissionLevel } = props.route.params; // whole groups object
@@ -133,11 +139,8 @@ const MessagesScreen = ({ navigation, ...props }) => {
             }
 
             if (res.status === 200) {
-                setMessagesList(res.data);
+                setMessagesList(res.data.reverse());
                 //listRef.current.scrollToEnd({ animated: false });
-                scrollToBottom();
-
-                // emit message through socket here!
             }
         } catch (err) {
             console.error('Error fetching messages:', err);
@@ -147,6 +150,37 @@ const MessagesScreen = ({ navigation, ...props }) => {
 
     useEffect(() => {
         fetchMessages();
+
+        // once connected to socket, request to join the group's room
+        // the websocket connection should be made at app startup
+        if (socket.connected) {
+            socket.emit('joinRoom', groupId);
+            console.log('joined room', groupId);
+        } else {
+            socket.on('connect', () => {
+                console.log('has connected!');
+                socket.emit('joinRoom', groupId);
+                console.log('joined room', groupId);
+            });
+        }
+
+        socket.on('newMessage', (message) => {
+            console.log('received new message:', `${message?.content} + ${message?.attachment}`);
+            // if (message.sender._id !== currentUserId)
+                setMessagesList(prevMessagesList => [message, ...prevMessagesList]);
+            //scrollToBottom();
+        });
+
+        socket.on('deleteMessage', (messageId) => {
+            console.log('deleted message with id', messageId);
+            setMessagesList(prevMessagesList => prevMessagesList.filter((message) => message._id !== messageId));
+        });
+
+        // disabling socket event listeners
+        return () => {
+            socket.off('newMessage');
+            socket.off('deleteMessage');
+        }
     }, []);
 
     useEffect(() => {
@@ -157,7 +191,8 @@ const MessagesScreen = ({ navigation, ...props }) => {
         if (listRef.current && messagesList.length > 0) {
             // using setTimeout to delay the scroll until after rendering
             setTimeout(() => {
-                listRef.current.scrollToIndex({ index: messagesList.length - 1, animated: false });
+                listRef.current.scrollToIndex({ index: 0, animated: false });
+                //listRef.current.scrollTo({ y: 0 });
             }, 100);
         }
     }
@@ -239,9 +274,7 @@ const MessagesScreen = ({ navigation, ...props }) => {
             if (resMessage.status === 201) {
                 setMessageField('');
                 setAttachment(null);
-                setTimeout(() => {
-                    listRef.current.scrollToIndex({ index: messagesList.length - 1, animated: false });
-                }, 100);
+                // scrollToBottom();
 
                 // emit send message through socket here!
             }
@@ -267,10 +300,8 @@ const MessagesScreen = ({ navigation, ...props }) => {
             }
 
             if (res.status === 200) {
-                const filteredList = messagesList.filter((message) => 
-                    message._id !== messageId
-                );
-                setMessagesList(filteredList);
+                // const filteredList = messagesList.filter((message) => message._id !== messageId);
+                // setMessagesList(filteredList);
                 setModalVisible(false);
 
                 // emit delete message through socket here!
@@ -325,7 +356,7 @@ const MessagesScreen = ({ navigation, ...props }) => {
                 keyExtractor={(item, index) => `${item._id}-${index}`}
                 contentContainerStyle={styles.messagesContainer}
                 getItemLayout={(data, index) => ({
-                    length: 100,
+                    length: 250,
                     offset: 100 * index,
                     index,
                 })}
@@ -333,6 +364,10 @@ const MessagesScreen = ({ navigation, ...props }) => {
                 windowSize={10}
                 // checking if list is scrolled to (near) bottom
                 // onScroll={onScroll}
+                //onContentSizeChange={() => scrollToBottom()}
+                // making flatlist inverted so that scrolling to bottom is easier lol
+                // and apparently more smooth
+                inverted
             />
 
             {attachment &&

@@ -104,6 +104,25 @@ router.post('/:groupId', verifyToken, async (req, res) => {
         });
         await message.save();
 
+        const io = req.io;
+        const populatedMessage = await Message.findById(message._id)
+            // using lean docs in order to make query faster
+            // (lean docs don't return mongoose docs but js objects instead)
+            .lean()
+            // getting username for message sender
+            .populate({ 
+                path: 'sender', 
+                select: 'username',
+                // and their userIcon + displayName through the userProfile virtual field
+                populate: {
+                    path: 'userProfile',
+                    select: '-userId -_id userIcon displayName'
+                }
+            });
+
+        io.to(groupId).emit('newMessage', populatedMessage);
+        console.log('message sent?', `${message?.content} + ${message?.attachment}`);
+
         res.status(201).json( message );
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -151,6 +170,10 @@ router.delete('/:messageId', verifyToken, async (req, res) => {
         }
 
         await Message.findByIdAndDelete(messageId);
+
+        const io = req.io;
+        io.emit('deleteMessage', messageId);
+
         res.status(200).json({ message: 'Message deleted successfully' });
     } catch (err) {
         res.status(500).json({ error: err.message });
