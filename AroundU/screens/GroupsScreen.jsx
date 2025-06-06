@@ -52,6 +52,7 @@ const GroupsScreen = ({ navigation }) => {
 
     const fetchGroups = async () => {
         try {
+            console.log('access token:', accessToken);
             const res = await axiosInstance.get(`/user/profile/groups`, {
                 headers: {
                     'Authorization': `Bearer ${accessToken}`
@@ -84,21 +85,21 @@ const GroupsScreen = ({ navigation }) => {
     useFocusEffect(
         useCallback(() => {
             fetchGroups();
-        }, []),
+        }, [accessToken]),
     );
 
     return (
         isLoading ?
-        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'white' }}>
             <Text>Loading</Text>
         </View> :
 
         <>
             {groupsList.length === 0 ?
-                <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+                <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'white' }}>
                     <Text style={{ fontSize: scaleSize(26), textAlign: 'center', width: scaleSize(340) }}>You are not in any groups. In order to join a group navigate to the Discover tab.</Text>
                 </View> :
-                <ScrollView contentContainerStyle={{ justifyContent: 'center', alignItems: 'center', flexGrow: 1 }}>
+                <ScrollView contentContainerStyle={{ justifyContent: 'center', alignItems: 'center', flexGrow: 1, backgroundColor: 'white' }}>
                     <View style={{ alignItems: 'center', width: scaleSize(300), gap: 20, paddingVertical: insets.top + scaleSize(20) }}>
                         <Text style={{ fontSize: scaleSize(16) }}>Your groups:</Text>
                         {groupsList.map((item, index) => (

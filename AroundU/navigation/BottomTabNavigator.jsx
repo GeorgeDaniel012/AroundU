@@ -10,25 +10,26 @@ import GroupsScreen from "../screens/GroupsScreen";
 import SettingsScreen from "../screens/SettingsScreen";
 import { scaleSize } from "../utils/helpers";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import ProfileScreen from "../screens/ProfileScreen";
 
 const Tabs = () => {
     const insets = useSafeAreaInsets();
 
     return (
         <Tab.Navigator
-            initialRouteName = "Home"
+            initialRouteName = "Groups"
             screenOptions = {({ route }) => ({
                 headerShown: false,
                 // defines the icon for each tab screen
                 tabBarIcon: ({ color, size }) => {
                     let iconName;
 
-                    if (route.name === "Home") {
-                        iconName = "home";
+                    if (route.name === "Groups") {
+                        iconName = "users";
                     } else if (route.name === "Discover") {
                         iconName = "search";
-                    } else if (route.name === "Groups") {
-                        iconName = "users";
+                    } else if (route.name === "Profile") {
+                        iconName = "user-alt";
                     } else if (route.name === "Settings") {
                         iconName = "cog";
                     }
@@ -41,9 +42,10 @@ const Tabs = () => {
                 tabBarStyle: { height: scaleSize(60) + insets.bottom, paddingBottom: insets.bottom, paddingTop: scaleSize(3) } // base height = 80 (scale(73))
             })}
         >
-            <Tab.Screen name="Home" component={HomeScreen} />
-            <Tab.Screen name="Discover" component={DiscoverScreen} />
+            {/* <Tab.Screen name="Home" component={HomeScreen} /> */}
             <Tab.Screen name="Groups" component={GroupsScreen} />
+            <Tab.Screen name="Discover" component={DiscoverScreen} />
+            <Tab.Screen name="Profile" component={ProfileScreen} initialParams={{ userId: '', fromTabNavigator: true }}/>
             <Tab.Screen name="Settings" component={SettingsScreen} />
         </Tab.Navigator>
     );

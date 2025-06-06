@@ -1,4 +1,4 @@
-import { createContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 import axiosInstance from "../utils/axiosInstance";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Alert } from "react-native";
@@ -6,6 +6,8 @@ import { Alert } from "react-native";
 // we need to call setAccessToken in the axios response interceptor
 // so to do that we will make a "copy" of it
 let setAccessTokenExt = () => {};
+
+export let latestAccessToken = null;
 
 // context to store access token in app memory
 export const AuthContext = createContext();
@@ -16,7 +18,12 @@ export const AuthProvider = ({ children }) => {
     // copying setAccessToken
     useEffect(() => {
         setAccessTokenExt = setAccessToken;
-    }, []);
+        latestAccessToken = accessToken;
+    }, [accessToken]);
+
+    // useEffect(() => {
+    //     console.log('new access token:', accessToken);
+    // }, [accessToken]);
 
     const getCookie = (res, cookieName) => {
         var match = res.headers['set-cookie'][0]
@@ -102,5 +109,6 @@ export const AuthProvider = ({ children }) => {
 }
 
 export const setAccessTokenExternal = (token) => {
+    console.log(setAccessTokenExt);
     setAccessTokenExt(token);
 }

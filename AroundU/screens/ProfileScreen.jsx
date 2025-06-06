@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useState } from "react";
-import { View, Text, TouchableOpacity, Image, Dimensions, ScrollView } from "react-native";
+import { View, Text, TouchableOpacity, Image, Dimensions, ScrollView, Alert } from "react-native";
 import axiosInstance from "../utils/axiosInstance";
 import { AuthContext } from "../contexts/AuthContext";
 import { CONNECTION } from '../config/config';
@@ -10,7 +10,7 @@ import Icon from "react-native-vector-icons/FontAwesome5";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const ProfileScreen = ({ navigation, ...props }) => {
-    const { userId } = props.route.params;
+    const { userId, fromTabNavigator } = props.route.params;
     const [username, setUsername] = useState('');
     const [displayName, setDisplayName] = useState('');
     const [bio, setBio] = useState('');
@@ -29,6 +29,7 @@ const ProfileScreen = ({ navigation, ...props }) => {
                     'Authorization': `Bearer ${accessToken}`,
                     'Content-Type': 'application/json'
                 },
+                validateStatus: status => status < 500, // throw error if status is at least 500
             });
 
             if (resUserProfile.status >= 400) {
@@ -83,8 +84,8 @@ const ProfileScreen = ({ navigation, ...props }) => {
     }, []);
 
     return (
-        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-            <BackButton navigation={navigation}/>
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'white' }}>
+            {!fromTabNavigator && <BackButton navigation={navigation}/>}
             {
                 isLoading ?
                 <Text>Loading</Text> :

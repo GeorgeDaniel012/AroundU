@@ -179,6 +179,7 @@ const styles = StyleSheet.create({
 		marginBottom: scaleSize(10),
 		padding: 8,
 		borderRadius: 10,
+        backgroundColor: 'white'
     },
     input: {
 		//height: 40,

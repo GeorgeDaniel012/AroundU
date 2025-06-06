@@ -157,7 +157,7 @@ const SettingsScreen = ({ navigation }) => {
     }
 
     return (
-        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'white' }}>
             <TouchableOpacity style={globalStyles.buttons} onPress={logoutCallback}>
                 <Text style={globalStyles.buttonText}>Logout</Text>
             </TouchableOpacity>

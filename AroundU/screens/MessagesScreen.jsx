@@ -26,7 +26,7 @@ const socket = io(CONNECTION, {
 const MessageComponent = React.memo(({navigation, ...props}) => {
     const { message, currentUserId, setSelectedMessage, setModalVisible, } = props;
     const [imageError, setImageError] = useState(false);
-    const [imageVideoSize, setImageVideoSize] = useState({ width: scaleSize(260), height: scaleSize(260) });
+    const [imageVideoSize, setImageVideoSize] = useState({ width: scaleSize(220), height: scaleSize(220) });
     const [hasLoaded, setHasLoaded] = useState(false);
 
     const formattedTimestamp = new Intl.DateTimeFormat('en-US', {
@@ -41,7 +41,7 @@ const MessageComponent = React.memo(({navigation, ...props}) => {
         if (hasLoaded) return;
         const { width, height } = e.nativeEvent.source;
 
-        const maxDim = scaleSize(260);
+        const maxDim = scaleSize(220);
         const scale = Math.min(maxDim / width, maxDim / height);
         setImageVideoSize({ width: width*scale, height: height*scale });
         setHasLoaded(true);
@@ -51,7 +51,7 @@ const MessageComponent = React.memo(({navigation, ...props}) => {
         if (hasLoaded) return;
         const { width, height } = e.naturalSize;
 
-        const maxDim = scaleSize(260);
+        const maxDim = scaleSize(220);
         const scale = Math.min(maxDim / width, maxDim / height);
         setImageVideoSize({ width: width*scale, height: height*scale });
         setHasLoaded(true);
@@ -122,7 +122,7 @@ const MessageComponent = React.memo(({navigation, ...props}) => {
                                     <View style={{ paddingVertical: scaleSize(5), flexDirection: 'row', gap: scaleSize(10), alignItems: 'center' }}>
                                         <Icon name="file-download" size={scaleSize(16)} color="black"/>
                                         <Text 
-                                            style={{ fontSize: scaleSize(16), textDecorationLine: 'underline', maxWidth: scaleSize(260) }}
+                                            style={{ fontSize: scaleSize(16), textDecorationLine: 'underline', maxWidth: scaleSize(220) }}
                                         >{message.attachmentFilename}</Text>
                                     </View>
                                 </TouchableOpacity>
@@ -260,18 +260,16 @@ const MessagesScreen = ({ navigation, ...props }) => {
         });
 
         socket.on('reaction', ({ messageId, userWhoReacted, reaction }) => {
-            console.log('Received reaction event:', { messageId, userWhoReacted, reaction });
+            console.log('received reaction:', { messageId, userWhoReacted, reaction });
             setMessagesList(prevMessagesList => prevMessagesList.map((message) => {
                 // for every message that is not the message referenced in the socket message
                 if (message._id !== messageId) return message;
 
                 // for the correct message we remove the existing reaction from userWhoReacted
                 const filteredReacts = message.reacts.filter(react => react.userWhoReacted.toString() !== userWhoReacted.toString());
-                console.log('a!');
                 // if the reaction is not !remove! then we add a new reaction to the list
                 if (reaction !== '!remove!') {
                     filteredReacts.push({ userWhoReacted: userWhoReacted, reaction: reaction });
-                    console.log('b!');
                 }
                 return { ...message, reacts: filteredReacts };
             }));
@@ -564,7 +562,7 @@ const styles = StyleSheet.create({
     messageReceived: {
         minHeight: scaleSize(50),
         //minWidth: scaleSize(50),
-        maxWidth: scaleSize(300),
+        maxWidth: scaleSize(260),
         backgroundColor: 'tomato',
         borderRadius: 10,
         padding: scaleSize(10),
@@ -590,6 +588,7 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'flex-start',
         alignSelf: 'flex-end',
+        marginRight: 10
         // shadowColor: "#000",
         // shadowOffset: {
         //     width: 0,
