@@ -129,6 +129,64 @@ router.post('/:groupId', verifyToken, async (req, res) => {
     }
 });
 
+// react to message
+router.put('/react/:messageId', verifyToken, async (req, res) => {
+    try {
+        const userId = req.userId;
+        if (!userId) {
+            return res.status(403).json({ error: 'Unauthorized' });
+        }
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        const messageId = req.params.messageId;
+        if (!messageId) {
+            return res.status(400).json({ error: 'Message ID is required' });
+        }
+        const message = await Message.findById(messageId);
+        if (!message) {
+            return res.status(404).json({ error: 'Message not found' });
+        }
+
+        const groupId = message.group;
+        const group = await Group.findById(groupId);
+        if (!group) {
+            return res.status(404).json({ error: 'Group not found' });
+        }
+        
+        // user needs to be part of the group the message was sent to
+        const hasPermission = group.members.some(member => member.member.equals(userId));
+        if (!hasPermission) {
+            return res.status(403).json({ error: 'Not allowed' });
+        }
+
+        // reactions can be like, dislike (maybe more in the future?)
+        const { reaction } = req.body;
+        if (!reaction) {
+            return res.status(400).json({ error: 'Message ID is required' });
+        }
+
+        // remove possible existing reaction from user
+        message.reacts = message.reacts.filter(react => !react.userWhoReacted.equals(userId));
+        if (reaction !== '!remove!')
+        // add new reaction to reacts array
+        message.reacts.push({ userWhoReacted: userId, reaction: reaction });
+
+        await message.save();
+
+        const io = req.io;
+        // emitting to group
+        io.emit('reaction', { messageId: messageId, userWhoReacted: userId, reaction: reaction });
+        console.log('reaction made?', `${messageId} + ${userId} + ${reaction}`);
+
+        res.status(200).json( message );
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 router.delete('/:messageId', verifyToken, async (req, res) => {
     try {
         const userId = req.userId;
@@ -158,7 +216,7 @@ router.delete('/:messageId', verifyToken, async (req, res) => {
         // user needs to be moderator or higher to delete messages
         const isModOrHigher = group.members.some(member => member.member.equals(userId) && member.permission >= 1);
         // or needs to have sent the message
-        const hasPermission = isModOrHigher || message.sender === userId;
+        const hasPermission = isModOrHigher || message.sender.equals(userId);
         if (!hasPermission) {
             return res.status(403).json({ error: 'Not allowed' });
         }

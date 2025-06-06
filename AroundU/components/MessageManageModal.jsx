@@ -1,15 +1,17 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Modal, View, Text, TouchableWithoutFeedback, TouchableOpacity, StyleSheet } from "react-native";
 import { scaleSize } from "../utils/helpers";
 import globalStyles from "../styles/globalStyles";
 
 const MessageManageModal = ({ navigation, ...props }) => {
-    const { handleDeleteMessage, message, isVisible, closeModal, permissionLevel } = props;
+    const { handleDeleteMessage, message, isVisible, closeModal, permissionLevel, handleReact, currentUserId } = props;
 
     const handleProfileView = () => {
         closeModal();
         navigation.navigate("ProfileScreen", { userId: message.sender._id });
     }
+
+    useEffect(() => console.log(message), [message]);
 
     return (
         <Modal
@@ -30,7 +32,28 @@ const MessageManageModal = ({ navigation, ...props }) => {
                                 <Text style={globalStyles.unselectedThemeText}>View {message?.sender.userProfile.displayName}'s profile</Text>
                             </TouchableOpacity>
 
-                            {permissionLevel >= 1 &&
+                            {/* if current user didn't like message */}
+                            {!message?.reacts.some(react => react.userWhoReacted === currentUserId && react.reaction === 'like') &&
+                                <TouchableOpacity onPress={() => handleReact(message?._id, 'like')} style={styles.modalOptions}>
+                                    <Text style={globalStyles.unselectedThemeText}>Like message</Text>
+                                </TouchableOpacity>
+                            }
+
+                            {/* if current user didn't dislike message */}
+                            {!message?.reacts.some(react => react.userWhoReacted === currentUserId && react.reaction === 'dislike') &&
+                                <TouchableOpacity onPress={() => handleReact(message?._id, 'dislike')} style={styles.modalOptions}>
+                                    <Text style={globalStyles.unselectedThemeText}>Dislike message</Text>
+                                </TouchableOpacity>
+                            }
+                            
+                            {/* if current user did react to message */}
+                            {message?.reacts.some(react => react.userWhoReacted === currentUserId) &&
+                                <TouchableOpacity onPress={() => handleReact(message?._id, '!remove!')} style={styles.modalOptions}>
+                                    <Text style={globalStyles.unselectedThemeText}>Remove reaction</Text>
+                                </TouchableOpacity>
+                            }
+
+                            {(permissionLevel >= 1 || message?.sender._id === currentUserId) &&
                                 <TouchableOpacity onPress={() => handleDeleteMessage(message?._id)} style={styles.modalOptions}>
                                     <Text style={globalStyles.unselectedThemeText}>Delete message</Text>
                                 </TouchableOpacity>

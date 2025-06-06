@@ -24,7 +24,7 @@ const socket = io(CONNECTION, {
 
 // wrapping entire component in memo so that messages don't get re-rendered
 const MessageComponent = React.memo(({navigation, ...props}) => {
-    const { message, currentUserId, setSelectedMessage, setModalVisible } = props;
+    const { message, currentUserId, setSelectedMessage, setModalVisible, } = props;
     const [imageError, setImageError] = useState(false);
     const [imageVideoSize, setImageVideoSize] = useState({ width: scaleSize(260), height: scaleSize(260) });
     const [hasLoaded, setHasLoaded] = useState(false);
@@ -86,7 +86,7 @@ const MessageComponent = React.memo(({navigation, ...props}) => {
                 }
                 <TouchableOpacity
                     style={currentUserIsSender ? styles.messageSent : styles.messageReceived}
-                    onLongPress={() =>{ setSelectedMessage(message); setModalVisible(true) }}
+                    onLongPress={() =>{ setSelectedMessage(message); setModalVisible(true); }}
                 >
                     {!currentUserIsSender &&
                         <Text style={styles.senderDisplayName}>{message.sender.userProfile.displayName}</Text>
@@ -110,6 +110,12 @@ const MessageComponent = React.memo(({navigation, ...props}) => {
                                         onFullscreenPlayerDidDismiss={() => videoRef.current.pause()}
                                         onLoad={onLoadVideo}
                                     />
+                                    <View 
+                                        style={{ backgroundColor: 'rgba(255, 255, 255, 0.8)', padding: 10, borderRadius: 50, 
+                                            position: 'absolute', top: imageVideoSize.height / 2 - scaleSize(24) - 5, left: imageVideoSize.width / 2 - scaleSize(24) - 5 }}
+                                    >
+                                        <Icon name="play-circle" size={scaleSize(48)} color="black"/>
+                                    </View>
                                 </TouchableOpacity> :
                                 // this is any other file
                                 <TouchableOpacity onPress={() => Linking.openURL(`${CONNECTION}/static/${message.attachment}`)}>
@@ -127,9 +133,35 @@ const MessageComponent = React.memo(({navigation, ...props}) => {
                         <Text style={{...styles.messageContent, paddingTop: 2}}>{message.content}</Text>
                     }
                 </TouchableOpacity>
+
+                {message.reacts.length !== 0 &&
+                    <View style={styles.reactionsBubble}>
+                        {
+                            Object.entries(
+                                message.reacts.reduce((acc, react) => {
+                                    acc[react.reaction] = (acc[react.reaction] || 0) + 1;
+                                    return acc;
+                                }, {})
+                            ).map(([reaction, count]) => (
+                                <View
+                                    key={`reaction-${message._id}-${reaction}`}
+                                    style={{ flexDirection: 'row' }}
+                                >
+                                    {/* currently supporting only likes and dislikes */}
+                                    <Text style={{ fontSize: scaleSize(16) }}>{reaction === 'like' ? '👍' : reaction === 'dislike' ? '👎' : '❓'}</Text>
+                                    <Text style={{ fontSize: scaleSize(16) }}>{count}</Text>
+                                </View>
+                            ))
+                        }
+                    </View>
+                }
             </View>
 
-            <Text style={currentUserIsSender ? styles.timestampSent : styles.timestampReceived}>
+            
+            
+            <Text style={{...(currentUserIsSender ? styles.timestampSent : styles.timestampReceived), 
+                marginTop: (message.reacts.length !== 0 ? 20 : 1)
+            }}>
                 {formattedTimestamp}
             </Text>
         </View>
@@ -144,6 +176,7 @@ const MessagesScreen = ({ navigation, ...props }) => {
     const [attachment, setAttachment] = useState(null);
     const [isModalVisible, setModalVisible] = useState(false);
     const [selectedMessage, setSelectedMessage] = useState(null);
+    const [selectedMessageCurrentUserIsSender, setSelectedMessageCurrentUserIsSender] = useState(false);
 
     const [currentPermissionLevel, setCurrentPermissionLevel] = useState(permissionLevel);
     const currentUserId = useRef('');
@@ -226,11 +259,31 @@ const MessagesScreen = ({ navigation, ...props }) => {
                 navigation.goBack();
         });
 
+        socket.on('reaction', ({ messageId, userWhoReacted, reaction }) => {
+            console.log('Received reaction event:', { messageId, userWhoReacted, reaction });
+            setMessagesList(prevMessagesList => prevMessagesList.map((message) => {
+                // for every message that is not the message referenced in the socket message
+                if (message._id !== messageId) return message;
+
+                // for the correct message we remove the existing reaction from userWhoReacted
+                const filteredReacts = message.reacts.filter(react => react.userWhoReacted.toString() !== userWhoReacted.toString());
+                console.log('a!');
+                // if the reaction is not !remove! then we add a new reaction to the list
+                if (reaction !== '!remove!') {
+                    filteredReacts.push({ userWhoReacted: userWhoReacted, reaction: reaction });
+                    console.log('b!');
+                }
+                return { ...message, reacts: filteredReacts };
+            }));
+        });
+
         // disabling socket event listeners
         return () => {
             socket.off('newMessage');
             socket.off('deleteMessage');
             socket.off('changePermissions');
+            socket.off('userKickOrBan');
+            socket.off('reaction');
         }
     }, []);
 
@@ -354,8 +407,6 @@ const MessagesScreen = ({ navigation, ...props }) => {
                 // const filteredList = messagesList.filter((message) => message._id !== messageId);
                 // setMessagesList(filteredList);
                 setModalVisible(false);
-
-                // emit delete message through socket here!
             }
         } catch (err) {
             console.error('Error deleting message:', err);
@@ -363,8 +414,34 @@ const MessagesScreen = ({ navigation, ...props }) => {
         }
     }
 
+    const handleReact = async (messageId, reaction) => {
+        try {
+            const res = await axiosInstance.put(`message/react/${messageId}`, {
+                reaction: reaction,
+            }, {
+                headers: {
+                    'Authorization': `Bearer ${accessToken}`
+                },
+                validateStatus: status => status < 500,
+            });
+
+            if (res.status >= 400) {
+                const errorMessage = res.data.error;
+                console.log(errorMessage);
+                Alert.alert('Error', errorMessage);
+            }
+
+            if (res.status === 200) {
+                setModalVisible(false);
+            }
+        } catch (err) {
+            console.error('Error reacting to message:', err);
+            Alert.alert('Error', 'Failed to react to message');
+        }
+    }
+
     return (
-        <KeyboardAvoidingView behavior={'height'} keyboardVerticalOffset={-insets.bottom + 20} style={{ flex: 1, alignItems: 'center' }}>
+        <KeyboardAvoidingView behavior={'padding'} keyboardVerticalOffset={-insets.bottom} style={{ flex: 1, alignItems: 'center' }}>
             <View style={styles.header}>
                 <View style={{width:scaleSize(60)}}></View>
                 {/* kind of stupid fix but if the back button is not rendered after the view
@@ -450,8 +527,10 @@ const MessagesScreen = ({ navigation, ...props }) => {
                 message={selectedMessage}
                 isVisible={isModalVisible}
                 handleDeleteMessage={handleDeleteMessage}
-                closeModal={() => setModalVisible(false)}
+                closeModal={() => {setModalVisible(false); setSelectedMessage(null)}}
                 permissionLevel={currentPermissionLevel}
+                currentUserId={currentUserId.current}
+                handleReact={handleReact}
                 navigation={navigation}
             />
         </KeyboardAvoidingView>
@@ -585,6 +664,17 @@ const styles = StyleSheet.create({
     sendButtonText: {
         fontSize: scaleSize(16),
         fontWeight: 'bold'
+    },
+    reactionsBubble: {
+        flexDirection: 'row',
+        borderRadius: 10,
+        padding: scaleSize(6),
+        backgroundColor: 'ghostwhite',
+        alignSelf: 'flex-end',
+        flexGrow: 0,
+        position: 'absolute',
+        bottom: -20,
+        right: -30
     }
 });
 

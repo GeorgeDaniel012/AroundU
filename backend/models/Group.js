@@ -10,10 +10,7 @@ const groupSchema = new mongoose.Schema({
         type: String,
         required: true,
     },
-    description: {
-        type: String,
-        required: true,
-    },
+    description: String,
     tags: { // for example "beginners", "competitive"
         type: [String], 
         default: []

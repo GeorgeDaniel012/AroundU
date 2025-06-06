@@ -26,9 +26,11 @@ const messageSchema = new mongoose.Schema({
             },
             reaction: {
                 type: String, // might make it work like discord
-                            // if possible and easy enough
+                              // if possible and easy enough
                 required: true
-            }
+            },
+            _id: false // we don't want every single
+                       // reaction to have its own id
         }],
         default: [],
     }
