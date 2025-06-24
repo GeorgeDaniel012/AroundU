@@ -29,7 +29,7 @@ const MessageManageModal = ({ navigation, ...props }) => {
                     <TouchableWithoutFeedback onPress={e => e.stopPropagation()}>
                         <View style={styles.modalContent}>
                             <TouchableOpacity onPress={handleProfileView} style={styles.modalOptions}>
-                                <Text style={globalStyles.unselectedThemeText}>View {message?.sender.userProfile.displayName}'s profile</Text>
+                                <Text style={{...globalStyles.unselectedThemeText, textAlign: 'center'}}>View {message?.sender.userProfile.displayName}'s profile</Text>
                             </TouchableOpacity>
 
                             {/* if current user didn't like message */}

@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useRef, useState } from "react";
-import { View, Text, Button, StyleSheet, StatusBar, TouchableOpacity, TextInput, KeyboardAvoidingView, Platform, ScrollView, FlatList, Image, Linking, Alert } from "react-native";
+import { View, Text, Button, StyleSheet, StatusBar, TouchableOpacity, TextInput, KeyboardAvoidingView, Platform, ScrollView, FlatList, Image, Linking, Alert, Keyboard } from "react-native";
 import BackButton from "../components/BackButton";
 import { getScreenHeight, scaleSize } from "../utils/helpers";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
@@ -178,9 +178,15 @@ const MessagesScreen = ({ navigation, ...props }) => {
     const [selectedMessage, setSelectedMessage] = useState(null);
     const [selectedMessageCurrentUserIsSender, setSelectedMessageCurrentUserIsSender] = useState(false);
 
+    const [textInputHeight, setTextInputHeight] = useState(scaleSize(44));
+    const [keyboardHeight, setKeyboardHeight] = useState(0);
+
     const [currentPermissionLevel, setCurrentPermissionLevel] = useState(permissionLevel);
     const currentUserId = useRef('');
     const { accessToken } = useContext(AuthContext);
+
+    // api level for Android or os version for iOS
+    const osVersion = Platform.constants.Version || Platform.constants.osVersion;
 
     const insets = useSafeAreaInsets();
     const listRef = useRef(null);
@@ -217,6 +223,7 @@ const MessagesScreen = ({ navigation, ...props }) => {
     }
 
     useEffect(() => {
+        console.log('os version:', osVersion);
         getCurrentId();
         fetchMessages();
 
@@ -235,9 +242,7 @@ const MessagesScreen = ({ navigation, ...props }) => {
 
         socket.on('newMessage', (message) => {
             console.log('received new message:', `${message?.content} + ${message?.attachment}`);
-            // if (message.sender._id !== currentUserId.current)
-                setMessagesList(prevMessagesList => [message, ...prevMessagesList]);
-            //scrollToBottom();
+            setMessagesList(prevMessagesList => [message, ...prevMessagesList]);
         });
 
         socket.on('deleteMessage', (messageId) => {
@@ -275,13 +280,32 @@ const MessagesScreen = ({ navigation, ...props }) => {
             }));
         });
 
-        // disabling socket event listeners
         return () => {
+            // disabling socket event listeners
             socket.off('newMessage');
             socket.off('deleteMessage');
             socket.off('changePermissions');
             socket.off('userKickOrBan');
             socket.off('reaction');
+        }
+    }, []);
+
+    useEffect(() => {
+        if (osVersion >= 33) {
+            const onShow = (e) => setKeyboardHeight(e.endCoordinates.height);
+            const onHide = (e) => setKeyboardHeight(0);
+
+            const showEvent = Platform.OS === 'android' ? 'keyboardDidShow' : 'keyboardWillShow';
+            const hideEvent = Platform.OS === 'android' ? 'keyboardDidHide' : 'keyboardWillHide';
+
+            const showListener = Keyboard.addListener(showEvent, onShow);
+            const hideListener = Keyboard.addListener(hideEvent, onHide);
+
+            return () => {
+                // removing keyboard event listeners
+                showListener.remove();
+                hideListener.remove();
+            }
         }
     }, []);
 
@@ -297,6 +321,13 @@ const MessagesScreen = ({ navigation, ...props }) => {
                 //listRef.current.scrollTo({ y: 0 });
             }, 100);
         }
+    }
+
+    // have the text input's height change when content height changes
+    const onTextInputSizeChange = (e) => {
+        // have the input height be between scaleSize(44) and scaleSize(120)
+        const maxHeight = Math.min(e.nativeEvent.contentSize.height, scaleSize(120));
+        setTextInputHeight(Math.max(maxHeight, scaleSize(44)));
     }
 
     // const onScroll = (e) => {
@@ -439,7 +470,7 @@ const MessagesScreen = ({ navigation, ...props }) => {
     }
 
     return (
-        <KeyboardAvoidingView behavior={'padding'} keyboardVerticalOffset={-insets.bottom} style={{ flex: 1, alignItems: 'center' }}>
+        <View behavior={undefined} keyboardVerticalOffset={0} style={{ flex: 1, alignItems: 'center', paddingBottom: keyboardHeight }}>
             <View style={styles.header}>
                 <View style={{width:scaleSize(60)}}></View>
                 {/* kind of stupid fix but if the back button is not rendered after the view
@@ -488,6 +519,7 @@ const MessagesScreen = ({ navigation, ...props }) => {
                 })}
                 initialNumToRender={10}
                 windowSize={10}
+                keyboardShouldPersistTaps="handled"
                 // checking if list is scrolled to (near) bottom
                 // onScroll={onScroll}
                 //onContentSizeChange={() => scrollToBottom()}
@@ -510,11 +542,13 @@ const MessagesScreen = ({ navigation, ...props }) => {
                     <Icon name="paperclip" size={scaleSize(26)} color="black"/>
                 </TouchableOpacity>
                 <TextInput
-                    style={styles.messageInput}
+                    style={{...styles.messageInput, height: textInputHeight}}
                     value={messageField}
                     onChangeText={setMessageField}
+                    onContentSizeChange={onTextInputSizeChange}
                     placeholder="Type a message..."
                     placeholderTextColor="grey"
+                    multiline
                 />
                 <TouchableOpacity style={styles.sendButton} onPress={handleSendMessage}>
                     <Text style={styles.sendButtonText}>Send</Text>
@@ -531,7 +565,7 @@ const MessagesScreen = ({ navigation, ...props }) => {
                 handleReact={handleReact}
                 navigation={navigation}
             />
-        </KeyboardAvoidingView>
+        </View>
     );
 }
 
@@ -625,7 +659,7 @@ const styles = StyleSheet.create({
         paddingLeft: scaleSize(16),
     },
     inputContainer: {
-        height: getScreenHeight(1/13),
+        minHeight: getScreenHeight(1/13),
         width: '100%',
         justifyContent: 'center',
         alignItems: 'center',
@@ -633,11 +667,13 @@ const styles = StyleSheet.create({
         backgroundColor: 'white',
         borderTopWidth: 1,
         borderColor: 'grey',
+        flexGrow: 1,
     },
     messageInput: {
         ...globalStyles.input,
         flexGrow: 1,
-        flexShrink: 1
+        flexShrink: 1,
+
     },
     attachmentIcon: {
         borderRadius: 10,

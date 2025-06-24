@@ -28,7 +28,7 @@ const MarkerIcon = (props) => {
                     setImageError(true);
                 }}
             /> */}
-            {
+            {/* {
                 imageError ?
                 <Icon
                     name={getIconForTheme(group.theme)}
@@ -43,7 +43,12 @@ const MarkerIcon = (props) => {
                         setImageError(true);
                     }}
                 />
-            }
+            } */}
+            <Icon
+                name={getIconForTheme(group.theme)}
+                size={28}
+                color="black"
+            />
         </View>
     );
 }
