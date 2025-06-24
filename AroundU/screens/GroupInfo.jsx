@@ -234,7 +234,7 @@ const MemberManageModal = ({ navigation, ...props }) => {
                     <TouchableWithoutFeedback onPress={e => e.stopPropagation()}>
                         <View style={styles.modalContent}>
                             <TouchableOpacity onPress={handleProfileView} style={styles.modalOptions}>
-                                <Text style={globalStyles.unselectedThemeText}>View {member?.userProfile.displayName}'s profile</Text>
+                                <Text style={{...globalStyles.unselectedThemeText, textAlign: 'center'}}>View {member?.userProfile.displayName}'s profile</Text>
                             </TouchableOpacity>
 
                             {   // user is moderator or higher

@@ -74,7 +74,7 @@ const MessageComponent = React.memo(({navigation, ...props}) => {
                                 resizeMode="contain"
                             /> :
                             <Image
-                                source={{ uri: `${CONNECTION}/static/${message.sender.userProfile.userIcon}`, cache: 'reload' }}
+                                source={{ uri: `${CONNECTION}/static/${message.sender.userProfile.userIcon}` }}
                                 style={{ width: scaleSize(30), height: scaleSize(30), borderRadius: 50 }}
                                 resizeMode="contain"
                                 onError={({nativeEvent: {error}}) => {
@@ -135,6 +135,10 @@ const MessageComponent = React.memo(({navigation, ...props}) => {
                 </TouchableOpacity>
 
                 {message.reacts.length !== 0 &&
+                    // <View style={currentUserIsSender ?
+                    //     {...styles.reactionsBubble, left: -30} :
+                    //     {...styles.reactionsBubble, right: -30}
+                    // }>
                     <View style={styles.reactionsBubble}>
                         {
                             Object.entries(
@@ -387,7 +391,7 @@ const MessagesScreen = ({ navigation, ...props }) => {
             }
 
             const resMessage = await axiosInstance.post(`/message/${groupId}`, {
-                content: messageField,
+                content: messageField.trim(),
                 attachment: attachmentUrl,
                 attachmentType: attachment?.type,
                 attachmentFilename: attachment?.name
@@ -407,6 +411,7 @@ const MessagesScreen = ({ navigation, ...props }) => {
             if (resMessage.status === 201) {
                 setMessageField('');
                 setAttachment(null);
+                setTextInputHeight(scaleSize(44));
                 // scrollToBottom();
 
                 // emit send message through socket here!
@@ -622,7 +627,7 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'flex-start',
         alignSelf: 'flex-end',
-        marginRight: 10
+        //marginRight: 6
         // shadowColor: "#000",
         // shadowOffset: {
         //     width: 0,
@@ -708,8 +713,8 @@ const styles = StyleSheet.create({
         alignSelf: 'flex-end',
         flexGrow: 0,
         position: 'absolute',
-        bottom: -20,
-        right: -30
+        bottom: -25,
+        right: 5,
     }
 });
 
