@@ -19,7 +19,7 @@ const server = createServer(app);
 const io = new Server(server);
 
 app.use(cors({
-    origin: 'http://192.168.214.53:8081',
+    origin: true,//'http://192.168.214.53:8081',
     credentials: true
 }));
 app.use(cookieParser());
@@ -65,6 +65,6 @@ io.on('connection', (socket) => {
 
 const PORT = process.env.PORT || 3000;
 
-server.listen(PORT, () => {
+server.listen(PORT, '0.0.0.0', () => {
     console.log(`Server is running on port ${PORT}`);
 });
