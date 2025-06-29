@@ -1,5 +1,6 @@
 import React from 'react';
 import { Modal, StyleSheet, TouchableOpacity, View, Image } from 'react-native';
+import { scaleSize } from '../utils/helpers';
 import Icon from "react-native-vector-icons/FontAwesome5";
 
 const FullScreenImageModal = ({navigation, ...props}) => {
@@ -16,8 +17,8 @@ const FullScreenImageModal = ({navigation, ...props}) => {
                     <Icon name="times" size={scaleSize(30)} color="white"/>
                 </TouchableOpacity>
                 <Image
-                    source={{ uri: image.uri, cache: 'default' }}
-                    style={{ width: image.width, height: image.height }}
+                    source={{ uri: image?.uri, cache: 'default' }}
+                    style={{ width: image?.width / 220 * 375, height: image?.height / 220 * 375 }}
                     resizeMode="contain"
                 />
             </View>

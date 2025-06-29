@@ -13,7 +13,7 @@ import Icon from "react-native-vector-icons/FontAwesome5";
 import { pick } from "@react-native-documents/picker";
 import MessageManageModal from "../components/MessageManageModal";
 import { io } from "socket.io-client";
-import FullScreenImageModal from "../components/FullscreenImageModal";
+import FullScreenImageModal from "../components/FullScreenImageModal";
 
 const socket = io(CONNECTION, {
     transports: ['websocket']
@@ -94,11 +94,11 @@ const MessageComponent = React.memo(({navigation, ...props}) => {
                     }
                     {message.attachment && 
                         (message.attachmentType.startsWith('image') ?
-                            <TouchableOpacity onPress={() => setSelectedImage({
+                            <TouchableOpacity onPress={() => {setSelectedImage({
                                 uri: `${CONNECTION}/static/${message.attachment}`,
                                 width: imageVideoSize.width,
                                 height: imageVideoSize.height,
-                            })}>
+                            }); setImageModalVisible(true); console.log('aaaaa')}}>
                                 <Image
                                     source={{ uri: `${CONNECTION}/static/${message.attachment}`, cache: 'default' }}
                                     style={{ width: imageVideoSize.width, height: imageVideoSize.height }}
@@ -305,6 +305,8 @@ const MessagesScreen = ({ navigation, ...props }) => {
     }, []);
 
     useEffect(() => {
+        setInterval(() => console.log(selectedImage), 5000);
+
         if (osVersion >= 33) {
             const onShow = (e) => setKeyboardHeight(e.endCoordinates.height);
             const onHide = (e) => setKeyboardHeight(0);
