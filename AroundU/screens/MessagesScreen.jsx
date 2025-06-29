@@ -13,6 +13,7 @@ import Icon from "react-native-vector-icons/FontAwesome5";
 import { pick } from "@react-native-documents/picker";
 import MessageManageModal from "../components/MessageManageModal";
 import { io } from "socket.io-client";
+import FullScreenImageModal from "../components/FullscreenImageModal";
 
 const socket = io(CONNECTION, {
     transports: ['websocket']
@@ -24,7 +25,7 @@ const socket = io(CONNECTION, {
 
 // wrapping entire component in memo so that messages don't get re-rendered
 const MessageComponent = React.memo(({navigation, ...props}) => {
-    const { message, currentUserId, setSelectedMessage, setModalVisible, } = props;
+    const { message, currentUserId, setSelectedMessage, setMessageManageModalVisible, setSelectedImage, setImageModalVisible } = props;
     const [imageError, setImageError] = useState(false);
     const [imageVideoSize, setImageVideoSize] = useState({ width: scaleSize(220), height: scaleSize(220) });
     const [hasLoaded, setHasLoaded] = useState(false);
@@ -86,19 +87,25 @@ const MessageComponent = React.memo(({navigation, ...props}) => {
                 }
                 <TouchableOpacity
                     style={currentUserIsSender ? styles.messageSent : styles.messageReceived}
-                    onLongPress={() =>{ setSelectedMessage(message); setModalVisible(true); }}
+                    onLongPress={() =>{ setSelectedMessage(message); setMessageManageModalVisible(true); }}
                 >
                     {!currentUserIsSender &&
                         <Text style={styles.senderDisplayName}>{message.sender.userProfile.displayName}</Text>
                     }
                     {message.attachment && 
                         (message.attachmentType.startsWith('image') ?
-                            <Image
-                                source={{ uri: `${CONNECTION}/static/${message.attachment}`, cache: 'default' }}
-                                style={{ width: imageVideoSize.width, height: imageVideoSize.height }}
-                                resizeMode="contain"
-                                onLoad={onLoadImage}
-                            /> : 
+                            <TouchableOpacity onPress={() => setSelectedImage({
+                                uri: `${CONNECTION}/static/${message.attachment}`,
+                                width: imageVideoSize.width,
+                                height: imageVideoSize.height,
+                            })}>
+                                <Image
+                                    source={{ uri: `${CONNECTION}/static/${message.attachment}`, cache: 'default' }}
+                                    style={{ width: imageVideoSize.width, height: imageVideoSize.height }}
+                                    resizeMode="contain"
+                                    onLoad={onLoadImage}
+                                />
+                            </TouchableOpacity> : 
                             message.attachmentType.startsWith('video') ?
                                 <TouchableOpacity onPress={() => { videoRef.current.setFullScreen(true); videoRef.current.resume(); }}>
                                     <Video
@@ -178,9 +185,12 @@ const MessagesScreen = ({ navigation, ...props }) => {
     const [messageField, setMessageField] = useState('');
     const [messagesList, setMessagesList] = useState([]);
     const [attachment, setAttachment] = useState(null);
-    const [isModalVisible, setModalVisible] = useState(false);
+    const [isMessageManageModalVisible, setMessageManageModalVisible] = useState(false);
     const [selectedMessage, setSelectedMessage] = useState(null);
     const [selectedMessageCurrentUserIsSender, setSelectedMessageCurrentUserIsSender] = useState(false);
+
+    const [isImageModalVisible, setImageModalVisible] = useState(false);
+    const [selectedImage, setSelectedImage] = useState(null);
 
     const [textInputHeight, setTextInputHeight] = useState(scaleSize(44));
     const [keyboardHeight, setKeyboardHeight] = useState(0);
@@ -440,7 +450,7 @@ const MessagesScreen = ({ navigation, ...props }) => {
             if (res.status === 200) {
                 // const filteredList = messagesList.filter((message) => message._id !== messageId);
                 // setMessagesList(filteredList);
-                setModalVisible(false);
+                setMessageManageModalVisible(false);
             }
         } catch (err) {
             console.error('Error deleting message:', err);
@@ -466,7 +476,7 @@ const MessagesScreen = ({ navigation, ...props }) => {
             }
 
             if (res.status === 200) {
-                setModalVisible(false);
+                setMessageManageModalVisible(false);
             }
         } catch (err) {
             console.error('Error reacting to message:', err);
@@ -480,7 +490,9 @@ const MessagesScreen = ({ navigation, ...props }) => {
             currentUserId={currentUserId.current}
             navigation={navigation}
             setSelectedMessage={setSelectedMessage}
-            setModalVisible={setModalVisible}
+            setMessageManageModalVisible={setMessageManageModalVisible}
+            setSelectedImage={setSelectedImage}
+            setImageModalVisible={setImageModalVisible}
         />;
 
     return (
@@ -564,13 +576,19 @@ const MessagesScreen = ({ navigation, ...props }) => {
 
             <MessageManageModal
                 message={selectedMessage}
-                isVisible={isModalVisible}
+                isVisible={isMessageManageModalVisible}
                 handleDeleteMessage={handleDeleteMessage}
-                closeModal={() => {setModalVisible(false); setSelectedMessage(null)}}
+                closeModal={() => {setMessageManageModalVisible(false); setSelectedMessage(null)}}
                 permissionLevel={currentPermissionLevel}
                 currentUserId={currentUserId.current}
                 handleReact={handleReact}
                 navigation={navigation}
+            />
+
+            <FullScreenImageModal
+                image={selectedImage}
+                isVisible={isImageModalVisible}
+                closeModal={() => setImageModalVisible(false)}
             />
         </View>
     );

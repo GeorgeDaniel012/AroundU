@@ -11,7 +11,7 @@ const MessageManageModal = ({ navigation, ...props }) => {
         navigation.navigate("ProfileScreen", { userId: message.sender._id });
     }
 
-    useEffect(() => console.log(message), [message]);
+    //useEffect(() => console.log(message), [message]);
 
     return (
         <Modal
