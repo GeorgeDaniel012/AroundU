@@ -94,7 +94,7 @@ const MessageComponent = React.memo(({navigation, ...props}) => {
                     {message.attachment && 
                         (message.attachmentType.startsWith('image') ?
                             <Image
-                                source={{ uri: `${CONNECTION}/static/${message.attachment}`, cache: 'reload' }}
+                                source={{ uri: `${CONNECTION}/static/${message.attachment}`, cache: 'default' }}
                                 style={{ width: imageVideoSize.width, height: imageVideoSize.height }}
                                 resizeMode="contain"
                                 onLoad={onLoadImage}
@@ -103,7 +103,7 @@ const MessageComponent = React.memo(({navigation, ...props}) => {
                                 <TouchableOpacity onPress={() => { videoRef.current.setFullScreen(true); videoRef.current.resume(); }}>
                                     <Video
                                         ref={videoRef}
-                                        source={{ uri: `${CONNECTION}/static/${message.attachment}`, cache: 'reload' }}
+                                        source={{ uri: `${CONNECTION}/static/${message.attachment}`, cache: 'default' }}
                                         style={{ width: imageVideoSize.width, height: imageVideoSize.height, justifyContent: 'center', alignItems: 'center' }}
                                         resizeMode="contain"
                                         paused
@@ -474,6 +474,15 @@ const MessagesScreen = ({ navigation, ...props }) => {
         }
     }
 
+    const renderListItem = (item) =>
+        <MessageComponent
+            message={item.item}
+            currentUserId={currentUserId.current}
+            navigation={navigation}
+            setSelectedMessage={setSelectedMessage}
+            setModalVisible={setModalVisible}
+        />;
+
     return (
         <View behavior={undefined} keyboardVerticalOffset={0} style={{ flex: 1, alignItems: 'center', paddingBottom: keyboardHeight }}>
             <View style={styles.header}>
@@ -506,15 +515,7 @@ const MessagesScreen = ({ navigation, ...props }) => {
             <FlatList
                 ref={listRef}
                 data={messagesList}
-                renderItem={(item) => 
-                    <MessageComponent
-                        message={item.item}
-                        currentUserId={currentUserId.current}
-                        navigation={navigation}
-                        setSelectedMessage={setSelectedMessage}
-                        setModalVisible={setModalVisible}
-                    />
-                }
+                renderItem={renderListItem}
                 keyExtractor={(item, index) => `${item._id}-${index}`}
                 contentContainerStyle={styles.messagesContainer}
                 getItemLayout={(data, index) => ({
@@ -523,7 +524,8 @@ const MessagesScreen = ({ navigation, ...props }) => {
                     index,
                 })}
                 initialNumToRender={10}
-                windowSize={10}
+                windowSize={21}
+                maxToRenderPerBatch={10}
                 keyboardShouldPersistTaps="handled"
                 // checking if list is scrolled to (near) bottom
                 // onScroll={onScroll}
