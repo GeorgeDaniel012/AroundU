@@ -10,6 +10,7 @@ import { CONNECTION } from '../config/config';
 import globalStyles from '../styles/globalStyles';
 import { useFocusEffect } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const MarkerIcon = (props) => {
     const { group } = props;
@@ -115,6 +116,21 @@ const FilterModal = (props) => {
         setThemeFilter(updatedFilter);
     }
 
+    const handleApply = async () => {
+        const asyncStorageFilterPreferences = JSON.parse(await AsyncStorage.getItem('filterPreferences'));
+        const currentUserId = await AsyncStorage.getItem('currentUserId');
+
+        const newPreferences = {...asyncStorageFilterPreferences, [`${currentUserId}`]: {
+            radius: radius,
+            themeFilter: themeFilter
+        }};
+
+        console.log('new preferences?', newPreferences);
+
+        await AsyncStorage.setItem('filterPreferences', JSON.stringify(newPreferences));
+        closeModal();
+    }
+
     return (
         <Modal
             visible={isVisible}
@@ -162,7 +178,7 @@ const FilterModal = (props) => {
                         )}
                         style={{ flexGrow: 0, marginVertical: 10 }}
                     />
-                    <TouchableOpacity style={{...globalStyles.buttons}} onPress={closeModal}>
+                    <TouchableOpacity style={{...globalStyles.buttons}} onPress={handleApply}>
                         <Text style={{...globalStyles.buttonText, marginRight: 0, textAlign: 'center'}}>Apply</Text>
                     </TouchableOpacity>
                 </View>
@@ -244,8 +260,22 @@ const DiscoverScreen = ({ navigation }) => {
         }
     }
 
+    const getCurrentUserFilterPreferences = async () => {
+        const currentUserId = await AsyncStorage.getItem('currentUserId');
+        const currentUserFilterPreferences = (JSON.parse(await AsyncStorage.getItem('filterPreferences')))[currentUserId];
+
+        if (currentUserFilterPreferences) {
+            setRadius(currentUserFilterPreferences.radius);
+            setThemeFilter(currentUserFilterPreferences.themeFilter);
+        }
+    }
+
     useEffect(() => {
+        // self-explanatory
         requestLocationPermission();
+
+        // to get the existing preferences for the current logged in user
+        getCurrentUserFilterPreferences();
     }, []);
 
     useEffect(() => {
@@ -342,6 +372,8 @@ const DiscoverScreen = ({ navigation }) => {
                 }}
                 onRegionChangeComplete={onRegionChange}
                 toolbarEnabled={false}
+                userInterfaceStyle='light'
+                showsCompass={false}
                 // googleRenderer='LEGACY'
                 // showsUserLocation={true}
                 // showsMyLocationButton={true}

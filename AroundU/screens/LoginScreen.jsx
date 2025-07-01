@@ -174,11 +174,7 @@ const styles = StyleSheet.create({
         flexGrow: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        borderColor: '#eee',
-		borderWidth: 4,
-		marginBottom: scaleSize(10),
 		padding: 8,
-		borderRadius: 10,
         backgroundColor: 'white'
     },
     input: {

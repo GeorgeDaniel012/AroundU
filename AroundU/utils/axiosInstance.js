@@ -9,17 +9,17 @@ const axiosInstance = axios.create({
     // timeout: 2000
 });
 
-axiosInstance.interceptors.request.use(
-    async (req) => {
-        // console.log('[Axios Interceptor] Request:', req);
-        req.headers['Authorization'] = `Bearer ${latestAccessToken}`;
-        return req;
-    },
-    async (err) => {
-        console.log('[Axios Interceptor] Request Error:', err);
-        return err;
-    },
-);
+// axiosInstance.interceptors.request.use(
+//     async (req) => {
+//         // console.log('[Axios Interceptor] Request:', req);
+//         req.headers['Authorization'] = `Bearer ${latestAccessToken}`;
+//         return req;
+//     },
+//     async (err) => {
+//         console.log('[Axios Interceptor] Request Error:', err);
+//         return err;
+//     },
+// );
 
 // in case the user is unauthorized to perform the request (code 401)
 // the app tries to refresh the token and tries the request again
@@ -28,7 +28,7 @@ axiosInstance.interceptors.response.use(
         console.log(`${res.config._retry ? 'after refresh' : 'before refresh'} ${res.config.headers}`);
         // console.log('[Axios Interceptor] Response:', res);
         if (res.status === 401 && !res.config._retry) {
-            console.log('aaaa?')
+            // console.log('aaaa?')
             try {
                 const refreshToken = await AsyncStorage.getItem('refreshToken');
                 if (refreshToken !== null) {
@@ -48,7 +48,7 @@ axiosInstance.interceptors.response.use(
                     if (refreshRes.status === 200) {
                         // console.log(res.data.token);
                         setAccessTokenExternal(refreshRes.data.token);
-                        console.log('aaaaa??!?!??!')
+                        // console.log('aaaaa??!?!??!')
 
                         // setting a retry flag to mark that it was retried once
                         res.config._retry = true;
