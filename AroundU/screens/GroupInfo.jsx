@@ -244,7 +244,7 @@ const MemberManageModal = ({ navigation, ...props }) => {
                                     onPress={() => alertManage(handleKick, `Are you sure you want to kick ${member?.userProfile.displayName}?`)}
                                     style={styles.modalOptions}
                                 >
-                                    <Text style={globalStyles.unselectedThemeText}>Kick {member?.userProfile.displayName}</Text>
+                                    <Text style={{...globalStyles.unselectedThemeText, textAlign: 'center'}}>Kick {member?.userProfile.displayName}</Text>
                                 </TouchableOpacity>
                             }
 
@@ -255,7 +255,7 @@ const MemberManageModal = ({ navigation, ...props }) => {
                                     onPress={() => alertManage(handleBan, `Are you sure you want to ban ${member?.userProfile.displayName}?`)}
                                     style={styles.modalOptions}
                                 >
-                                    <Text style={globalStyles.unselectedThemeText}>Ban {member?.userProfile.displayName}</Text>
+                                    <Text style={{...globalStyles.unselectedThemeText, textAlign: 'center'}}>Ban {member?.userProfile.displayName}</Text>
                                 </TouchableOpacity>
                             }
 
@@ -271,8 +271,8 @@ const MemberManageModal = ({ navigation, ...props }) => {
                                             >
                                                 {
                                                     permission.id !== 0 ?
-                                                    <Text style={globalStyles.unselectedThemeText}>Make {member?.userProfile.displayName} {permission.levelName}</Text> :
-                                                    <Text style={globalStyles.unselectedThemeText}>Demote {member?.userProfile.displayName}</Text>
+                                                    <Text style={{...globalStyles.unselectedThemeText, textAlign: 'center'}}>Make {member?.userProfile.displayName} {permission.levelName}</Text> :
+                                                    <Text style={{...globalStyles.unselectedThemeText, textAlign: 'center'}}>Demote {member?.userProfile.displayName}</Text>
                                                 }
                                             </TouchableOpacity>
                                         );
@@ -288,7 +288,7 @@ const MemberManageModal = ({ navigation, ...props }) => {
                                         `Are you sure you want to transfer group ownership to ${member?.userProfile.displayName}?`)}
                                     style={styles.modalOptions}
                                 >
-                                    <Text style={globalStyles.unselectedThemeText}>Transfer ownership to {member?.userProfile.displayName}</Text>
+                                    <Text style={{...globalStyles.unselectedThemeText, textAlign: 'center'}}>Transfer ownership to {member?.userProfile.displayName}</Text>
                                 </TouchableOpacity>
                             }
                         </View>

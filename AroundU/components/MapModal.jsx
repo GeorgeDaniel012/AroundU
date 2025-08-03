@@ -146,6 +146,7 @@ const MapModal = (props) => {
                     key={isVisible ? 'map-visible' : 'map-hidden'}
                     style={styles.map}
                     //initialRegion={region}
+                    userInterfaceStyle='light'
                     region={region}
                     onRegionChangeComplete={onRegionChange}
                     toolbarEnabled={false}
